@@ -163,7 +163,7 @@ async function init() {
   minimap.init();
 
   // ── 18. Quality mode (low = no bloom/vignette, high = full post-processing)
-  let qualityHigh = false;
+  let qualityHigh = true;
 
   // ── 19. Hotkeys ─────────────────────────────────────────────────────
   const hotkeyManager = new HotkeyManager({

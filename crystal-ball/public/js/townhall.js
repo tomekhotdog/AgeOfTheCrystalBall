@@ -128,9 +128,8 @@ export class TownHall {
     g.add(tower1);
 
     // Tower 1 cone roof
-    const cone1 = m(new THREE.ConeGeometry(0.4, 0.5, 4), TH_RED);
+    const cone1 = m(new THREE.ConeGeometry(0.4, 0.5, 8), TH_RED);
     cone1.position.set(-0.7, 2.65, -0.7);
-    cone1.rotation.y = Math.PI / 4;
     g.add(cone1);
 
     // --- Tower (top-right corner) — shorter ---
@@ -139,9 +138,8 @@ export class TownHall {
     g.add(tower2);
 
     // Tower 2 cone roof
-    const cone2 = m(new THREE.ConeGeometry(0.4, 0.5, 4), TH_NAVY);
+    const cone2 = m(new THREE.ConeGeometry(0.4, 0.5, 8), TH_NAVY);
     cone2.position.set(0.7, 2.45, -0.7);
-    cone2.rotation.y = Math.PI / 4;
     g.add(cone2);
 
     // --- GR Banner on front face ---

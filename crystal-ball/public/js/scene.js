@@ -177,8 +177,8 @@ export function createScene() {
   const dirLight = new THREE.DirectionalLight(0xFFF5E6, 1.2);
   dirLight.position.set(5, 10, 5);
   dirLight.castShadow = true;
-  dirLight.shadow.mapSize.width = 1024;
-  dirLight.shadow.mapSize.height = 1024;
+  dirLight.shadow.mapSize.width = 2048;
+  dirLight.shadow.mapSize.height = 2048;
   dirLight.shadow.camera.left   = -17;
   dirLight.shadow.camera.right  =  17;
   dirLight.shadow.camera.top    =  17;

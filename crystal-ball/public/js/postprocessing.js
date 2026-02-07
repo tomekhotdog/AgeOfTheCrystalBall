@@ -86,7 +86,7 @@ export function setupPostProcessing(renderer, scene, camera) {
   // --- Pass 2: HDR bloom -------------------------------------------------
   const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.3,  // strength  — subtle glow; caller can raise for night scenes
+    0.5,  // strength  — moderate glow; caller can raise for night scenes
     0.4,  // radius    — spread of the bloom kernel
     0.85  // threshold — only pixels brighter than this value bloom
   );

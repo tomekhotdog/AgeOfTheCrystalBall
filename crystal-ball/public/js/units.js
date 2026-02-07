@@ -143,7 +143,7 @@ export function createUnit(session) {
   // --- Body dimensions per class ---
   const bodyDims = classDimensions(unitClass);
   const bodyGeom = cachedGeom(`body-${unitClass}`, () =>
-    new THREE.CylinderGeometry(bodyDims.radiusTop, bodyDims.radiusBottom, bodyDims.height, 8));
+    new THREE.CylinderGeometry(bodyDims.radiusTop, bodyDims.radiusBottom, bodyDims.height, 12));
   const bodyMat = new THREE.MeshLambertMaterial({
     color:       PALETTE.unitBody,
     transparent: unitClass === 'Ghost',
@@ -161,7 +161,7 @@ export function createUnit(session) {
     transparent: unitClass === 'Ghost',
     opacity:     unitClass === 'Ghost' ? 0.3 : 1.0,
   });
-  const headGeom = cachedGeom('head', () => new THREE.SphereGeometry(0.12, 8, 8));
+  const headGeom = cachedGeom('head', () => new THREE.SphereGeometry(0.12, 16, 12));
   const head = new THREE.Mesh(headGeom, headMat);
   head.position.y  = bodyDims.height + 0.17;
   head.castShadow  = true;

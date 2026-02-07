@@ -168,9 +168,8 @@ function buildChapel() {
   tower.position.set(0, 1.5, -0.4);
   g.add(tower);
 
-  const spire = m(new THREE.ConeGeometry(0.35, 0.9, 4), PALETTE.roof);
+  const spire = m(new THREE.ConeGeometry(0.35, 0.9, 8), PALETTE.roof);
   spire.position.set(0, 2.25, -0.4);
-  spire.rotation.y = Math.PI / 4;
   g.add(spire);
 
   // Door

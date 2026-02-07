@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { createBuilding, BUILDING_TYPES } from './buildings.js';
 import { createUnit, classifyUnit, _geomCache, _accessoryMatCache } from './units.js';
-import { getActivityForGroup } from './activities.js';
+import { getActivityForGroup, getActivityForSession } from './activities.js';
 import { applyStateVisuals, updateChildIndicator } from './stateVisuals.js';
 import { animBob, lerpToTarget } from './animations.js';
 
@@ -181,6 +181,7 @@ export class WorldManager {
       position: { x: tile.x, z: tile.z },
       anchors,
       activityPair,
+      _groupIndex: this.buildingTypeIndex - 1,
       label,
       healthBar,
       abandoned: false,
@@ -366,7 +367,17 @@ export class WorldManager {
     for (const [sessionId, unit] of this.units) {
       const { mesh, state, groupId, targetPos, session } = unit;
       const bldg = this.buildings.get(groupId);
-      const activityPair = bldg ? bldg.activityPair : null;
+
+      // ── Resolve activity pair (phase-aware for Mode 2) ─────────────────
+      let activityPair;
+      const sessionPhase = session?.context?.phase || null;
+      if (sessionPhase) {
+        // Mode 2: use phase-driven activity
+        const groupIndex = bldg ? bldg._groupIndex : 0;
+        activityPair = getActivityForSession(groupIndex, sessionPhase);
+      } else {
+        activityPair = bldg ? bldg.activityPair : null;
+      }
 
       // ── State-driven visual changes (color, emissive, opacity) ─────────
       // Run BEFORE activity so speedMultiplier can gate animations

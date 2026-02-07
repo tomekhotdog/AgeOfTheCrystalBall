@@ -1,13 +1,13 @@
 // server/discovery/index.js
-// Discovery interface — returns the appropriate discovery backend
-// based on the SIMULATE environment variable.
+// Discovery interface -- returns the appropriate discovery backend
+// based on the SIMULATE environment variable and platform.
 
 /**
  * Create and return a discovery instance.
  *
  * - If `process.env.SIMULATE === 'true'`, loads the SimulatorDiscovery.
- * - Otherwise, returns a stub that yields an empty session list
- *   (real platform discovery is deferred to a later milestone).
+ * - If on macOS (darwin), loads MacOSDiscovery for real process discovery.
+ * - Otherwise, returns a stub that yields an empty session list.
  *
  * @returns {Promise<{ discoverSessions(): Promise<object[]> }>}
  */
@@ -17,7 +17,12 @@ export async function createDiscovery() {
     return new SimulatorDiscovery();
   }
 
-  // Stub — real discovery not yet implemented
+  if (process.platform === "darwin") {
+    const { MacOSDiscovery } = await import("./macos.js");
+    return new MacOSDiscovery();
+  }
+
+  // Stub -- real discovery not yet implemented for this platform
   return {
     async discoverSessions() {
       return [];

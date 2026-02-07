@@ -1,4 +1,4 @@
-// hud.js — Top bar HUD updates.
+// hud.js -- Top bar HUD updates.
 // Reads session states from API data and updates the HUD stat counters.
 
 /**
@@ -25,6 +25,7 @@ export function updateHUD(apiData) {
   let awaiting = 0;
   let idle = 0;
   let stale = 0;
+  let blocked = 0;
 
   for (const s of sessions) {
     switch (s.state) {
@@ -32,19 +33,22 @@ export function updateHUD(apiData) {
       case 'awaiting': awaiting++; break;
       case 'idle':     idle++;     break;
       case 'stale':    stale++;    break;
+      case 'blocked':  blocked++;  break;
     }
   }
 
-  // Update DOM elements — session counts
+  // Update DOM elements -- session counts
   const elSessions = document.getElementById('hud-sessions');
   const elActive   = document.getElementById('hud-active');
   const elAwaiting = document.getElementById('hud-awaiting');
+  const elBlocked  = document.getElementById('hud-blocked');
   const elIdle     = document.getElementById('hud-idle');
   const elStale    = document.getElementById('hud-stale');
 
   if (elSessions) elSessions.textContent = sessions.length;
   if (elActive)   elActive.textContent   = active;
   if (elAwaiting) elAwaiting.textContent = awaiting;
+  if (elBlocked)  elBlocked.textContent  = blocked;
   if (elIdle)     elIdle.textContent     = idle;
   if (elStale)    elStale.textContent    = stale;
 
@@ -55,6 +59,16 @@ export function updateHUD(apiData) {
       awaitingStat.classList.add('awaiting-alert');
     } else {
       awaitingStat.classList.remove('awaiting-alert');
+    }
+  }
+
+  // Toggle blocked-alert class on the blocked stat container
+  const blockedStat = elBlocked ? elBlocked.closest('.hud-stat') : null;
+  if (blockedStat) {
+    if (blocked > 0) {
+      blockedStat.classList.add('blocked-alert');
+    } else {
+      blockedStat.classList.remove('blocked-alert');
     }
   }
 

@@ -59,6 +59,35 @@ export class SelectionPanel {
         <span class="panel-row-label">Children</span>
         <span>${session.has_children ? 'Yes' : 'No'}</span>
       </div>
+      ${session.mode === 2 ? `
+      <div class="panel-divider"></div>
+      <div class="panel-row">
+        <span class="panel-row-label">Mode</span>
+        <span><span class="panel-mode-badge mode-2">Mode 2</span></span>
+      </div>
+      <div class="panel-row">
+        <span class="panel-row-label">Task</span>
+        <span>${escapeHtml(session.context?.task || '')}</span>
+      </div>
+      <div class="panel-row">
+        <span class="panel-row-label">Phase</span>
+        <span><span class="panel-phase-badge phase-${escapeHtml(session.context?.phase || 'idle')}">${escapeHtml(session.context?.phase || 'unknown')}</span></span>
+      </div>
+      ${session.context?.detail ? `<div class="panel-row">
+        <span class="panel-row-label">Detail</span>
+        <span>${escapeHtml(session.context.detail)}</span>
+      </div>` : ''}
+      ${session.context?.blocked ? `<div class="panel-row">
+        <span class="panel-row-label">Status</span>
+        <span class="panel-blocked-indicator">BLOCKED</span>
+      </div>` : ''}
+      ` : `
+      <div class="panel-divider"></div>
+      <div class="panel-row">
+        <span class="panel-row-label">Mode</span>
+        <span><span class="panel-mode-badge mode-1">Mode 1 (passive)</span></span>
+      </div>
+      `}
     `;
 
     this.el.classList.remove('hidden');
@@ -74,7 +103,7 @@ export class SelectionPanel {
    */
   showGroup(group, sessions) {
     // Count states
-    const counts = { active: 0, awaiting: 0, idle: 0, stale: 0 };
+    const counts = { active: 0, awaiting: 0, blocked: 0, idle: 0, stale: 0 };
     for (const s of sessions) {
       if (counts[s.state] !== undefined) counts[s.state]++;
     }
@@ -107,6 +136,10 @@ export class SelectionPanel {
         <span>${counts.awaiting}</span>
       </div>
       <div class="panel-row">
+        <span class="panel-row-label">Blocked</span>
+        <span>${counts.blocked}</span>
+      </div>
+      <div class="panel-row">
         <span class="panel-row-label">Idle</span>
         <span>${counts.idle}</span>
       </div>
@@ -134,7 +167,7 @@ export class SelectionPanel {
     const count = sessions.length;
 
     // Count states
-    const counts = { active: 0, awaiting: 0, idle: 0, stale: 0 };
+    const counts = { active: 0, awaiting: 0, blocked: 0, idle: 0, stale: 0 };
     let totalCpu = 0;
     for (const s of sessions) {
       if (counts[s.state] !== undefined) counts[s.state]++;
@@ -168,6 +201,10 @@ export class SelectionPanel {
       <div class="panel-row">
         <span class="panel-row-label">Awaiting</span>
         <span>${counts.awaiting}</span>
+      </div>
+      <div class="panel-row">
+        <span class="panel-row-label">Blocked</span>
+        <span>${counts.blocked}</span>
       </div>
       <div class="panel-row">
         <span class="panel-row-label">Idle</span>

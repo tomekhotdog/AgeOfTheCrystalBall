@@ -120,3 +120,47 @@ export const ACTIVITY_PAIRS = [
 export function getActivityForGroup(groupIndex) {
   return ACTIVITY_PAIRS[((groupIndex % ACTIVITY_PAIRS.length) + ACTIVITY_PAIRS.length) % ACTIVITY_PAIRS.length];
 }
+
+// ── Mode 2: Phase-driven activity mapping ─────────────────────────────────
+
+/**
+ * Maps sidecar phases to activity pairs for Mode 2 sessions.
+ * Each phase uses semantically appropriate animations.
+ * @type {Object<string, {energetic: string, passive: string}>}
+ */
+export const PHASE_ACTIVITY_MAP = {
+  planning:     { energetic: 'Scribing',    passive: 'Scribing' },
+  researching:  { energetic: 'Patrolling',  passive: 'Patrolling' },
+  coding:       { energetic: 'Building',    passive: 'Scribing' },
+  testing:      { energetic: 'Mining',      passive: 'Praying' },
+  debugging:    { energetic: 'Mining',      passive: 'Mining' },
+  reviewing:    { energetic: 'Patrolling',  passive: 'Foraging' },
+  documenting:  { energetic: 'Scribing',    passive: 'Scribing' },
+  idle:         { energetic: 'Resting',     passive: 'Resting' },
+};
+
+// Build a lookup from activity name to activity object
+const _activityByName = new Map();
+for (const pair of ACTIVITY_PAIRS) {
+  _activityByName.set(pair.energetic.name, pair.energetic);
+  _activityByName.set(pair.passive.name, pair.passive);
+}
+
+/**
+ * Returns the activity pair for a session based on its sidecar phase.
+ * Falls back to group-based activity if phase is unknown.
+ * @param {number} groupIndex
+ * @param {string|null} phase - sidecar phase or null
+ * @returns {ActivityPair}
+ */
+export function getActivityForSession(groupIndex, phase) {
+  const mapping = phase ? PHASE_ACTIVITY_MAP[phase] : null;
+  if (!mapping) return getActivityForGroup(groupIndex);
+
+  const energetic = _activityByName.get(mapping.energetic);
+  const passive = _activityByName.get(mapping.passive);
+
+  if (!energetic || !passive) return getActivityForGroup(groupIndex);
+
+  return { energetic, passive };
+}

@@ -344,7 +344,7 @@ export function generateTerrain(scene) {
 
       if (info.type === 'water') {
         // ── Water tile: PlaneGeometry with shared ShaderMaterial (GPU ripple) ──
-        const planeGeom = new THREE.PlaneGeometry(1, 1, 4, 4);
+        const planeGeom = new THREE.PlaneGeometry(1, 1, 8, 8);
         mesh = new THREE.Mesh(planeGeom, waterShaderMat);
         mesh.rotation.x = -Math.PI / 2;
         mesh.position.set(wx, info.height, wz);
@@ -744,7 +744,7 @@ function createTree(gx, gz) {
   // Canopy (cone)
   const canopyHeight = 0.4 + rng * 0.15;
   const canopyRadius = 0.2 + rng * 0.08;
-  const canopyGeom = new THREE.ConeGeometry(canopyRadius, canopyHeight, 6);
+  const canopyGeom = new THREE.ConeGeometry(canopyRadius, canopyHeight, 10);
   const leafColor = pseudoRandom(gx * 3, gz * 3) > 0.5 ? PALETTE.treeLeaves : PALETTE.treeLeavesAlt;
   const canopyMat = new THREE.MeshLambertMaterial({ color: leafColor });
   const canopy = new THREE.Mesh(canopyGeom, canopyMat);

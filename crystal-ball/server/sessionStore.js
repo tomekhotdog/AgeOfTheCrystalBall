@@ -2,8 +2,10 @@
 // In-memory store that groups sessions by project and tracks state.
 // Also tracks idle-economics metrics: cumulative awaiting agent-minutes
 // and the longest current wait.
+// Supports Mode 2 sidecar context via .crystal-ball.json files.
 
 import { basename } from "node:path";
+import { readAllSidecars } from "./discovery/sidecar.js";
 
 const NAMES = [
   'Aldric', 'Bronwyn', 'Cedric', 'Daphne', 'Edric',
@@ -21,6 +23,22 @@ function nameFromPid(pid) {
   return NAMES[pid % NAMES.length];
 }
 
+/**
+ * Resolve final state by combining OS-classified state with sidecar context.
+ * Pure function, exported for testing.
+ *
+ * @param {string} osState - classifier-determined state
+ * @param {object|null} sidecarContext - validated sidecar context or null
+ * @returns {string} final state
+ */
+export function resolveState(osState, sidecarContext) {
+  if (!sidecarContext) return osState;
+  if (sidecarContext.blocked) return 'blocked';
+  // Stale sidecar + idle/stale OS: OS wins (sidecar data too old to trust)
+  if (sidecarContext.stale && (osState === 'idle' || osState === 'stale')) return osState;
+  return osState;
+}
+
 export class SessionStore {
   /** @type {import('./classifier.js').SessionClassifier} */
   #classifier;
@@ -30,13 +48,13 @@ export class SessionStore {
 
   // ── Idle-economics tracking ───────────────────────────────────────────
 
-  /** Previous state per PID (pid → state string from last poll) */
+  /** Previous state per PID (pid -> state string from last poll) */
   #prevStates = new Map();
 
-  /** Timestamp when each PID entered the awaiting state (pid → ms) */
+  /** Timestamp when each PID entered the awaiting/blocked state (pid -> ms) */
   #awaitingStart = new Map();
 
-  /** Cumulative milliseconds all sessions have spent in awaiting state */
+  /** Cumulative milliseconds all sessions have spent in awaiting/blocked state */
   #totalAwaitingMs = 0;
 
   /** Timestamp of the last poll (ms), used for incremental accumulation */
@@ -53,6 +71,7 @@ export class SessionStore {
 
   /**
    * Ingest raw sessions from discovery, classify, group, and store.
+   * Now async: reads sidecar files for Mode 2 context.
    *
    * @param {Array<{
    *   pid: number,
@@ -61,25 +80,50 @@ export class SessionStore {
    *   memMB: number,
    *   tty: string,
    *   hasChildren: boolean,
-   *   startTime: number
+   *   startTime: number,
+   *   sidecar?: object
    * }>} rawSessions
-   * @returns {{ timestamp: string, sessions: object[], groups: object[], metrics: object }}
+   * @returns {Promise<{ timestamp: string, sessions: object[], groups: object[], metrics: object }>}
    */
-  update(rawSessions) {
+  async update(rawSessions) {
     const now = Date.now();
     const livePids = new Set();
 
-    // ── 1. Record readings and classify ─────────────────────────────────
+    // ── 1. Read sidecars (inline from simulator, or from filesystem) ───
+    const sidecarMap = new Map();
+
+    // Collect inline sidecars from simulator
+    const needsFileRead = [];
+    for (const raw of rawSessions) {
+      if (raw.sidecar) {
+        sidecarMap.set(raw.pid, raw.sidecar);
+      } else {
+        needsFileRead.push({ pid: raw.pid, cwd: raw.cwd });
+      }
+    }
+
+    // Batch-read all filesystem sidecars from the central directory
+    if (needsFileRead.length > 0) {
+      const fileSidecars = await readAllSidecars(needsFileRead);
+      for (const [pid, ctx] of fileSidecars) {
+        sidecarMap.set(pid, ctx);
+      }
+    }
+
+    // ── 2. Record readings and classify ─────────────────────────────────
     const sessions = rawSessions.map((raw) => {
       livePids.add(raw.pid);
       this.#classifier.recordReading(raw.pid, raw.cpu);
 
-      const state = this.#classifier.classify({
+      const osState = this.#classifier.classify({
         pid: raw.pid,
         cpu: raw.cpu,
         tty: raw.tty,
         startTime: raw.startTime,
       });
+
+      const sidecarContext = sidecarMap.get(raw.pid) || null;
+      const state = resolveState(osState, sidecarContext);
 
       const groupName = basename(raw.cwd);
 
@@ -94,16 +138,18 @@ export class SessionStore {
         tty: raw.tty,
         has_children: raw.hasChildren,
         group: groupName,
+        mode: sidecarContext ? 2 : 1,
+        context: sidecarContext,
       };
     });
 
-    // ── 2. Cleanup stale PID history ────────────────────────────────────
+    // ── 3. Cleanup stale PID history ────────────────────────────────────
     this.#classifier.cleanup(livePids);
 
-    // ── 3. Update idle-economics tracking ───────────────────────────────
+    // ── 4. Update idle-economics tracking ───────────────────────────────
     this.#updateAwaitingMetrics(sessions, livePids, now);
 
-    // ── 4. Build groups ─────────────────────────────────────────────────
+    // ── 5. Build groups ─────────────────────────────────────────────────
     /** @type {Map<string, { cwd: string, sessionIds: string[] }>} */
     const groupMap = new Map();
 
@@ -123,10 +169,10 @@ export class SessionStore {
       session_ids: g.sessionIds,
     }));
 
-    // ── 5. Build metrics ────────────────────────────────────────────────
+    // ── 6. Build metrics ────────────────────────────────────────────────
     const metrics = this.#buildMetrics(sessions, now);
 
-    // ── 6. Store & return ───────────────────────────────────────────────
+    // ── 7. Store & return ───────────────────────────────────────────────
     this.#latest = {
       timestamp: new Date(now).toISOString(),
       sessions,
@@ -147,13 +193,16 @@ export class SessionStore {
   // ── Private: idle-economics helpers ─────────────────────────────────────
 
   /**
-   * Track state transitions into/out of awaiting and accumulate time.
-   * @param {object[]} sessions – classified sessions from this poll
-   * @param {Set<number>} livePids – PIDs still alive
-   * @param {number} now – current timestamp in ms
+   * Track state transitions into/out of awaiting/blocked and accumulate time.
+   * 'blocked' is treated like 'awaiting' for idle-economics accumulation.
+   * @param {object[]} sessions - classified sessions from this poll
+   * @param {Set<number>} livePids - PIDs still alive
+   * @param {number} now - current timestamp in ms
    */
   #updateAwaitingMetrics(sessions, livePids, now) {
-    // Accumulate time for sessions that were already awaiting since last poll
+    const isWaiting = (state) => state === 'awaiting' || state === 'blocked';
+
+    // Accumulate time for sessions that were already awaiting/blocked since last poll
     if (this.#lastPollTime > 0) {
       const elapsed = now - this.#lastPollTime;
       for (const pid of this.#awaitingStart.keys()) {
@@ -175,11 +224,11 @@ export class SessionStore {
       const prevState = this.#prevStates.get(s.pid);
       const currState = s.state;
 
-      if (currState === "awaiting" && prevState !== "awaiting") {
-        // Entering awaiting state
+      if (isWaiting(currState) && !isWaiting(prevState)) {
+        // Entering awaiting/blocked state
         this.#awaitingStart.set(s.pid, now);
-      } else if (currState !== "awaiting" && prevState === "awaiting") {
-        // Leaving awaiting state — time already accumulated in per-poll sweep
+      } else if (!isWaiting(currState) && isWaiting(prevState)) {
+        // Leaving awaiting/blocked state
         this.#awaitingStart.delete(s.pid);
       }
     }
@@ -207,8 +256,8 @@ export class SessionStore {
 
   /**
    * Build the metrics object for the API response.
-   * @param {object[]} sessions – classified sessions
-   * @param {number} now – current timestamp in ms
+   * @param {object[]} sessions - classified sessions
+   * @param {number} now - current timestamp in ms
    * @returns {object}
    */
   #buildMetrics(sessions, now) {
@@ -216,7 +265,7 @@ export class SessionStore {
     const awaitingAgentMinutes =
       Math.round((this.#totalAwaitingMs / 60_000) * 10) / 10;
 
-    // Longest current wait: find the session in awaiting with the earliest start
+    // Longest current wait: find the session in awaiting/blocked with the earliest start
     let longestWait = null;
     let earliestStart = Infinity;
 
@@ -236,9 +285,16 @@ export class SessionStore {
       }
     }
 
+    // Count blocked sessions
+    let blockedCount = 0;
+    for (const s of sessions) {
+      if (s.state === 'blocked') blockedCount++;
+    }
+
     return {
       awaitingAgentMinutes,
       longestWait,
+      blockedCount,
     };
   }
 }

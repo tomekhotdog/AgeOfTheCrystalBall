@@ -12,7 +12,7 @@
  * @returns {number}
  */
 export function activityScore(sessions) {
-  const weights = { active: 3, awaiting: 1, idle: 0, stale: -1 };
+  const weights = { active: 3, awaiting: 1, blocked: 0, idle: 0, stale: -1 };
   let score = 0;
   for (const s of sessions) {
     score += weights[s.state] ?? 0;
@@ -137,6 +137,10 @@ export class WarRoom {
         <div class="warroom-section-title">Platoon Leaderboard</div>
         <div class="warroom-leaderboard-body"></div>
       </div>
+      <div class="warroom-section" data-section="mode2">
+        <div class="warroom-section-title">Mode 2 Intel</div>
+        <div class="warroom-mode2-body"></div>
+      </div>
       <div class="warroom-section" data-section="feed">
         <div class="warroom-section-title">Activity Feed</div>
         <div class="warroom-feed"></div>
@@ -197,6 +201,9 @@ export class WarRoom {
     // --- Army Overview ---
     this._renderOverview(sessions);
 
+    // --- Mode 2 Intel ---
+    this._renderMode2(sessions);
+
     // --- Platoon Leaderboard ---
     this._renderLeaderboard(sessions, groups);
 
@@ -208,7 +215,7 @@ export class WarRoom {
 
   /** @param {Array} sessions */
   _renderOverview(sessions) {
-    const counts = { active: 0, awaiting: 0, idle: 0, stale: 0 };
+    const counts = { active: 0, awaiting: 0, blocked: 0, idle: 0, stale: 0 };
     let totalCpu = 0;
     let totalMem = 0;
 
@@ -242,12 +249,14 @@ export class WarRoom {
       <div class="warroom-state-bar">
         <div class="segment-active" style="width:${pct(counts.active)}%"></div>
         <div class="segment-awaiting" style="width:${pct(counts.awaiting)}%"></div>
+        <div class="segment-blocked" style="width:${pct(counts.blocked)}%"></div>
         <div class="segment-idle" style="width:${pct(counts.idle)}%"></div>
         <div class="segment-stale" style="width:${pct(counts.stale)}%"></div>
       </div>
       <div class="warroom-stat-row" style="font-size:11px;opacity:0.7;">
         <span>${counts.active} active</span>
         <span>${counts.awaiting} awaiting</span>
+        ${counts.blocked > 0 ? `<span style="color:#C41E3A">${counts.blocked} blocked</span>` : ''}
         <span>${counts.idle} idle</span>
         <span>${counts.stale} stale</span>
       </div>
@@ -296,6 +305,56 @@ export class WarRoom {
     html += '</table>';
 
     this.el.querySelector('.warroom-leaderboard-body').innerHTML = html;
+  }
+
+  /** @param {Array} sessions */
+  _renderMode2(sessions) {
+    const body = this.el.querySelector('.warroom-mode2-body');
+    if (!body) return;
+
+    const mode2 = sessions.filter(s => s.mode === 2);
+    const mode1 = sessions.length - mode2.length;
+
+    if (mode2.length === 0) {
+      body.innerHTML = '<div style="opacity:0.4;">No Mode 2 sessions.</div>';
+      return;
+    }
+
+    // Phase distribution
+    const phaseCounts = {};
+    const blockedSessions = [];
+    for (const s of mode2) {
+      const phase = s.context?.phase || 'unknown';
+      phaseCounts[phase] = (phaseCounts[phase] || 0) + 1;
+      if (s.state === 'blocked' || s.context?.blocked) {
+        blockedSessions.push(s);
+      }
+    }
+
+    const phaseBar = Object.entries(phaseCounts)
+      .map(([phase, count]) => `<span style="opacity:0.8;">${count} ${phase}</span>`)
+      .join(' ');
+
+    const blockedHtml = blockedSessions.length > 0
+      ? blockedSessions.map(s =>
+          `<div style="color:#C41E3A;font-size:11px;">${esc(s.id)} (${esc(s.group)}) - ${esc(s.context?.detail || 'blocked')}</div>`
+        ).join('')
+      : '';
+
+    body.innerHTML = `
+      <div class="warroom-stat-row">
+        <span class="warroom-stat-label">Mode 2</span>
+        <span class="warroom-stat-value">${mode2.length}</span>
+      </div>
+      <div class="warroom-stat-row">
+        <span class="warroom-stat-label">Mode 1</span>
+        <span class="warroom-stat-value">${mode1}</span>
+      </div>
+      <div class="warroom-stat-row" style="font-size:11px;opacity:0.7;flex-wrap:wrap;gap:4px;">
+        ${phaseBar}
+      </div>
+      ${blockedHtml ? `<div style="margin-top:4px;">${blockedHtml}</div>` : ''}
+    `;
   }
 
   _renderFeed() {

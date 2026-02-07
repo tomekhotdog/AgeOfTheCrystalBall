@@ -57,7 +57,7 @@ async function main() {
   async function poll() {
     try {
       const rawSessions = await discovery.discoverSessions();
-      store.update(rawSessions);
+      await store.update(rawSessions);
     } catch (err) {
       console.error("[poll] discovery error:", err);
     }

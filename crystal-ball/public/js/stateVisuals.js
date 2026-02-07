@@ -8,6 +8,7 @@ const PALETTE = {
   unitAwait: 0xF0D05A,
   unitIdle: 0xB0B0B0,
   unitStale: 0x888888,
+  unitBlocked: 0xC41E3A,
   crystalGlow: 0xB08EEC,
 };
 
@@ -48,6 +49,7 @@ export function applyStateVisuals(unitGroup, state, time) {
       }
       speedMultiplier = 1.0;
       removeAwaitLabel(unitGroup);
+      removeBlockedLabel(unitGroup);
       // Reset scale only if we were previously stale (slumped)
       if (unitGroup.scale.y < 0.9) unitGroup.scale.y = 1.0;
       break;
@@ -70,6 +72,7 @@ export function applyStateVisuals(unitGroup, state, time) {
       }
       speedMultiplier = 0.5;
       ensureAwaitLabel(unitGroup);
+      removeBlockedLabel(unitGroup);
       if (unitGroup.scale.y < 0.9) unitGroup.scale.y = 1.0;
       break;
     }
@@ -89,6 +92,7 @@ export function applyStateVisuals(unitGroup, state, time) {
       }
       speedMultiplier = 0.5;
       removeAwaitLabel(unitGroup);
+      removeBlockedLabel(unitGroup);
       if (unitGroup.scale.y < 0.9) unitGroup.scale.y = 1.0;
       break;
     }
@@ -106,9 +110,32 @@ export function applyStateVisuals(unitGroup, state, time) {
         headMesh.material.opacity = 0.4;
         headMesh.material.transparent = true;
       }
-      speedMultiplier = 0; // frozen — no animation
+      speedMultiplier = 0; // frozen -- no animation
       removeAwaitLabel(unitGroup);
+      removeBlockedLabel(unitGroup);
       unitGroup.scale.y = 0.8; // slumped
+      break;
+    }
+
+    // ----- BLOCKED: red emissive pulse, floating "X" label -----
+    case 'blocked': {
+      if (bodyMesh) {
+        bodyMesh.material.color.copy(getColor(PALETTE.unitBody));
+        if (!bodyMesh.material.emissive) bodyMesh.material.emissive = new THREE.Color();
+        const pulseIntensity = 0.3 + 0.3 * Math.sin(time * Math.PI * 6); // 3Hz
+        bodyMesh.material.emissive.set(PALETTE.unitBlocked);
+        bodyMesh.material.emissiveIntensity = pulseIntensity;
+        bodyMesh.material.opacity = 1.0;
+        bodyMesh.material.transparent = false;
+      }
+      if (headMesh) {
+        headMesh.material.opacity = 1.0;
+        headMesh.material.transparent = false;
+      }
+      speedMultiplier = 0.3;
+      removeAwaitLabel(unitGroup);
+      ensureBlockedLabel(unitGroup);
+      if (unitGroup.scale.y < 0.9) unitGroup.scale.y = 1.0;
       break;
     }
 
@@ -163,6 +190,41 @@ export function resetAwaitLabelCount() {
 /** Get current label count (for testing). */
 export function getAwaitLabelCount() {
   return _awaitLabelCount;
+}
+
+// ---------------------------------------------------------------------------
+// Blocked label management ("X" floating above unit, red)
+// ---------------------------------------------------------------------------
+
+export const MAX_BLOCKED_LABELS = 20;
+let _blockedLabelCount = 0;
+
+function ensureBlockedLabel(unitGroup) {
+  if (unitGroup.getObjectByName('blockedLabel')) return;
+  if (_blockedLabelCount >= MAX_BLOCKED_LABELS) return;
+
+  const div = document.createElement('div');
+  div.textContent = '\u2716';
+  div.style.cssText =
+    'color: #C41E3A; font-size: 18px; font-weight: bold; ' +
+    'text-shadow: 0 0 4px rgba(0,0,0,0.5); pointer-events: none;';
+
+  const label = new CSS2DObject(div);
+  label.position.set(0, 0.9, 0);
+  label.name = 'blockedLabel';
+  unitGroup.add(label);
+  _blockedLabelCount++;
+}
+
+function removeBlockedLabel(unitGroup) {
+  const existing = unitGroup.getObjectByName('blockedLabel');
+  if (existing) {
+    if (existing.element && existing.element.parentNode) {
+      existing.element.parentNode.removeChild(existing.element);
+    }
+    unitGroup.remove(existing);
+    _blockedLabelCount--;
+  }
 }
 
 // ---------------------------------------------------------------------------
