@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Age of the Crystal Ball</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+
+  <div class="hud-bar">
+    <span class="hud-title">Age of the Crystal Ball</span>
+    <div class="hud-stat">
+      <span class="hud-stat-label">Sessions</span>
+      <span class="hud-stat-value" id="hud-sessions">0</span>
+    </div>
+    <div class="hud-stat">
+      <span class="hud-stat-label">Active</span>
+      <span class="hud-stat-value" id="hud-active">0</span>
+    </div>
+    <div class="hud-stat" id="hud-awaiting-container">
+      <span class="hud-stat-label">Awaiting</span>
+      <span class="hud-stat-value" id="hud-awaiting">0</span>
+    </div>
+    <div class="hud-stat">
+      <span class="hud-stat-label">Idle</span>
+      <span class="hud-stat-value" id="hud-idle">0</span>
+    </div>
+    <div class="hud-stat">
+      <span class="hud-stat-label">Stale</span>
+      <span class="hud-stat-value" id="hud-stale">0</span>
+    </div>
+    <div class="hud-stat hud-idle-econ">
+      <span class="hud-stat-label">Await-min</span>
+      <span class="hud-stat-value" id="hud-await-minutes">0.0</span>
+    </div>
+    <div class="hud-stat hud-idle-econ">
+      <span class="hud-stat-label">Longest</span>
+      <span class="hud-stat-value" id="hud-longest-wait">&mdash;</span>
+    </div>
+  </div>
+
+  <div class="selection-panel hidden" id="selection-panel"></div>
+
+  <div class="hotkey-help hidden" id="hotkey-help">
+    <div class="hotkey-help-title">Hotkeys</div>
+    <div class="hotkey-help-grid">
+      <div class="hotkey-section">
+        <div class="hotkey-section-title">Camera</div>
+        <div class="hotkey-row"><kbd>Arrows</kbd><span>Pan camera</span></div>
+        <div class="hotkey-row"><kbd>Scroll</kbd><span>Zoom to cursor</span></div>
+        <div class="hotkey-row"><kbd>Q</kbd> / <kbd>E</kbd><span>Rotate view</span></div>
+        <div class="hotkey-row"><kbd>F</kbd><span>Focus on selection</span></div>
+      </div>
+      <div class="hotkey-section">
+        <div class="hotkey-section-title">Selection</div>
+        <div class="hotkey-row"><kbd>Space</kbd><span>Cycle idle units</span></div>
+        <div class="hotkey-row"><kbd>A</kbd><span>Select all awaiting</span></div>
+        <div class="hotkey-row"><kbd>1</kbd>-<kbd>5</kbd><span>Jump to platoon</span></div>
+        <div class="hotkey-row"><kbd>Esc</kbd><span>Deselect all</span></div>
+        <div class="hotkey-row"><kbd>Dbl-click</kbd><span>Select same class</span></div>
+      </div>
+      <div class="hotkey-section">
+        <div class="hotkey-section-title">Panels</div>
+        <div class="hotkey-row"><kbd>Tab</kbd><span>War Room</span></div>
+        <div class="hotkey-row"><kbd>M</kbd><span>Minimap</span></div>
+        <div class="hotkey-row"><kbd>H</kbd><span>Heatmap</span></div>
+        <div class="hotkey-row"><kbd>P</kbd><span>Perf monitor</span></div>
+        <div class="hotkey-row"><kbd>Shift+P</kbd><span>Copy perf snapshot</span></div>
+        <div class="hotkey-row"><kbd>G</kbd><span>Quality low/high</span></div>
+        <div class="hotkey-row"><kbd>?</kbd><span>This help</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <script type="module" src="js/main.js"></script>
+
+</body>
+</html>

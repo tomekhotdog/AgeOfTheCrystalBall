@@ -1,0 +1,15 @@
+{
+  "name": "crystal-ball",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "simulate": "SIMULATE=true node server/index.js",
+    "test": "npm run test:client && npm run test:server",
+    "test:client": "node --loader ./tests/client/three-mock-loader.js --test tests/client/*.test.js",
+    "test:server": "node --test tests/server/*.test.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0"
+  }
+}
