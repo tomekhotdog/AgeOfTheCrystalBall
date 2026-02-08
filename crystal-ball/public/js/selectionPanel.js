@@ -64,6 +64,12 @@ export class SelectionPanel {
         <span class="panel-row-label">Children</span>
         <span>${session.has_children ? 'Yes' : 'No'}</span>
       </div>
+      ${session.owner ? `
+      <div class="panel-row">
+        <span class="panel-row-label">Player</span>
+        <span><span class="owner-dot" style="background:${escapeHtml(session.ownerColor || '#A8D0E0')}"></span> ${escapeHtml(session.owner)}</span>
+      </div>
+      ` : ''}
       ${session.mode === 2 ? `
       <div class="panel-divider"></div>
       <div class="panel-row">
@@ -132,6 +138,10 @@ export class SelectionPanel {
         <span class="panel-title">${escapeHtml(group.id)}</span>
         <span class="panel-badge">${group.session_count} session${group.session_count !== 1 ? 's' : ''}</span>
       </div>
+      ${group.owners ? `<div class="panel-row">
+        <span class="panel-row-label">Players</span>
+        <span>${group.owners.map(o => `<span class="owner-dot" style="background:${escapeHtml(SelectionPanel._ownerColor(o, sessions))}"></span> ${escapeHtml(o)}`).join(', ')}</span>
+      </div>` : ''}
       <div class="panel-row">
         <span class="panel-row-label">Active</span>
         <span>${counts.active}</span>
@@ -248,6 +258,19 @@ export class SelectionPanel {
    * @param {number} seconds
    * @returns {string}
    */
+  /**
+   * Resolve ownerColor for a given owner name by looking through sessions.
+   * @param {string} ownerName
+   * @param {object[]} sessions
+   * @returns {string}
+   */
+  static _ownerColor(ownerName, sessions) {
+    for (const s of sessions) {
+      if (s.owner === ownerName && s.ownerColor) return s.ownerColor;
+    }
+    return '#A8D0E0';
+  }
+
   static formatUptime(seconds) {
     if (seconds == null || seconds < 0) return '—';
     const h = Math.floor(seconds / 3600);

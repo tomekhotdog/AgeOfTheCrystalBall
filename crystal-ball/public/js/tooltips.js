@@ -93,6 +93,10 @@ export function formatTooltipHTML(unitData, session) {
     html += `<div class="tooltip-row"><span class="tooltip-label">Memory</span><span class="tooltip-value">${session.mem} MB</span></div>`;
     html += `<div class="tooltip-row"><span class="tooltip-label">Uptime</span><span class="tooltip-value">${formatUptime(session.age_seconds)}</span></div>`;
     html += `<div class="tooltip-row"><span class="tooltip-label">Desk</span><span class="tooltip-value">${escapeHTML(session.group)}</span></div>`;
+    if (session.owner) {
+      const dotColor = session.ownerColor || '#A8D0E0';
+      html += `<div class="tooltip-row"><span class="tooltip-label">Player</span><span class="tooltip-value"><span class="owner-dot" style="background:${dotColor}"></span> ${escapeHTML(session.owner)}</span></div>`;
+    }
   } else {
     html += `<div class="tooltip-row"><span class="tooltip-label">No session data</span></div>`;
   }

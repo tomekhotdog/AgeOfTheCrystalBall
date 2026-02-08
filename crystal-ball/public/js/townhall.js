@@ -15,12 +15,12 @@ const VICTORY_FADE_DURATION    = 500;   // ms — fade-out after display
 const VICTORY_COOLDOWN         = 30000; // ms — minimum gap between triggers
 
 // Town Hall palette (GR HQ colors)
-const TH_STONE     = 0x7A7A80;
-const TH_BABYBLUE  = 0x89CFF0;
-const TH_GRYELLOW  = 0xFFD700;
-const TH_DOOR      = 0x3A2A1A;
-const TH_WINDOW    = 0xEEDDCC;
-const TH_GLOW      = 0xFFD700;
+const TH_STONE     = 0xA8A4A8;
+const TH_BABYBLUE  = 0xA8D0E0;
+const TH_GRYELLOW  = 0xE8D0A8;
+const TH_DOOR      = 0x6A5A4A;
+const TH_WINDOW    = 0xF0E8E0;
+const TH_GLOW      = 0xE8D0A8;
 
 // ---------------------------------------------------------------------------
 // Pure functions (testable without THREE)

@@ -16,15 +16,15 @@ const SIMULATED_GROUPS = [
 
 // ── Mode 2: Simulated tasks with phase cycles ──────────────────────────────
 const SIMULATED_TASKS = [
-  { task: 'Implement user authentication', phases: ['planning', 'researching', 'coding', 'testing', 'debugging', 'coding', 'testing', 'reviewing'] },
-  { task: 'Fix database connection pooling', phases: ['debugging', 'researching', 'coding', 'testing', 'coding', 'testing', 'reviewing'] },
-  { task: 'Add API rate limiting', phases: ['planning', 'coding', 'testing', 'documenting'] },
-  { task: 'Refactor payment processing', phases: ['researching', 'planning', 'coding', 'coding', 'testing', 'debugging', 'testing', 'reviewing'] },
-  { task: 'Migrate to TypeScript', phases: ['planning', 'coding', 'coding', 'coding', 'testing', 'debugging'] },
-  { task: 'Set up CI/CD pipeline', phases: ['researching', 'coding', 'testing', 'documenting'] },
-  { task: 'Optimize search queries', phases: ['researching', 'debugging', 'coding', 'testing', 'reviewing'] },
-  { task: 'Build notification system', phases: ['planning', 'researching', 'coding', 'testing', 'coding', 'testing', 'reviewing', 'documenting'] },
-  { task: 'Update dependency versions', phases: ['researching', 'coding', 'testing', 'debugging', 'testing'] },
+  { task: 'Implement user authentication', phases: ['planning', 'researching', 'coding', 'testing', 'coding', 'coding', 'testing', 'reviewing'] },
+  { task: 'Fix database connection pooling', phases: ['coding', 'researching', 'coding', 'testing', 'coding', 'testing', 'reviewing'] },
+  { task: 'Add API rate limiting', phases: ['planning', 'coding', 'testing', 'reviewing'] },
+  { task: 'Refactor payment processing', phases: ['researching', 'planning', 'coding', 'coding', 'testing', 'coding', 'testing', 'reviewing'] },
+  { task: 'Migrate to TypeScript', phases: ['planning', 'coding', 'coding', 'coding', 'testing', 'coding'] },
+  { task: 'Set up CI/CD pipeline', phases: ['researching', 'coding', 'testing', 'reviewing'] },
+  { task: 'Optimize search queries', phases: ['researching', 'coding', 'coding', 'testing', 'reviewing'] },
+  { task: 'Build notification system', phases: ['planning', 'researching', 'coding', 'testing', 'coding', 'testing', 'reviewing', 'reviewing'] },
+  { task: 'Update dependency versions', phases: ['researching', 'coding', 'testing', 'coding', 'testing'] },
   { task: 'Add accessibility features', phases: ['researching', 'planning', 'coding', 'testing', 'reviewing'] },
 ];
 
@@ -33,9 +33,7 @@ const PHASE_DETAILS = {
   researching:  ['Reading documentation', 'Exploring codebase', 'Searching for patterns', 'Reviewing prior art'],
   coding:       ['Writing implementation', 'Building components', 'Editing source files', 'Adding new module'],
   testing:      ['Running test suite', 'Writing unit tests', 'Checking edge cases', 'Validating integration'],
-  debugging:    ['Investigating failure', 'Tracing stack trace', 'Isolating root cause', 'Checking logs'],
   reviewing:    ['Reviewing diff', 'Checking code style', 'Validating changes', 'Running linter'],
-  documenting:  ['Writing docs', 'Updating README', 'Adding JSDoc comments', 'Writing changelog'],
   idle:         ['Waiting for input', 'Session idle'],
 };
 

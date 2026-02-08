@@ -10,23 +10,23 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 // ---------------------------------------------------------------------------
 
 const PALETTE = {
-  // Meadow biome — vibrant spring greens
-  grass: 0xA8CC9A, grassAlt: 0xB8DCA8,
-  wildflower1: 0xE8B8C8, wildflower2: 0xC8D8E8, wildflower3: 0xE8D8B0,
-  // Forest biome — rich but readable greens
-  forestGrass: 0x88AA82, forestGrassAlt: 0x749A70,
-  treeTrunk: 0x8B6850, treeLeaves: 0x62A062, treeLeavesAlt: 0x559255,
-  // Desert biome — warm golden tones
-  sand: 0xE2D4B0, sandAlt: 0xD8C8A4, rock: 0xB8A898,
-  // Mountain biome — visible stone
-  mountainStone: 0x9A9898, mountainStoneAlt: 0xAAAA9E, snow: 0xF0F0F8,
-  // Water — vivid clear blue
-  water: 0x4AACE8, waterDeep: 0x3898D8,
+  // Meadow biome — soft sage greens
+  grass: 0xC4D8B8, grassAlt: 0xD0E0C4,
+  wildflower1: 0xE8B8C8, wildflower2: 0xC8D8E8, wildflower3: 0xF0E0C8,
+  // Forest biome — muted sage
+  forestGrass: 0xA8C0A0, forestGrassAlt: 0x98B494,
+  treeTrunk: 0xB8A090, treeLeaves: 0x9AB898, treeLeavesAlt: 0x8AAC8C,
+  // Desert biome — warm ivory tones
+  sand: 0xF0E4D0, sandAlt: 0xE8DCC4, rock: 0xD0C4B8,
+  // Mountain biome — soft stone
+  mountainStone: 0xC0B8B4, mountainStoneAlt: 0xCCC4BC, snow: 0xF5F0F0,
+  // Water — muted teal
+  water: 0x90C0D0, waterDeep: 0x80B0C4,
   // Paths
-  path: 0xDED4BC,
+  path: 0xE8DCD0,
   // Shared
-  dirt: 0xC0AA82, hill: 0x96AA86,
-  sandstone: 0xE2CCA8, stone: 0xB8B0A0,
+  dirt: 0xD4C4B0, hill: 0xB4C4A8,
+  sandstone: 0xECDCC8, stone: 0xD0C8C0,
 };
 
 // ---------------------------------------------------------------------------

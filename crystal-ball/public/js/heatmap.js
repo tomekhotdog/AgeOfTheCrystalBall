@@ -9,10 +9,10 @@ import * as THREE from 'three';
 // Heat colour thresholds
 // ---------------------------------------------------------------------------
 
-const HEAT_HOT  = 0xCC3333;  // totalCpu > 100
-const HEAT_WARM = 0xE8843A;  // 50 < totalCpu <= 100
-const HEAT_COOL = 0xBBCC44;  // 10 < totalCpu <= 50
-const HEAT_COLD = 0x4488AA;  // totalCpu <= 10
+const HEAT_HOT  = 0xD09090;  // totalCpu > 100
+const HEAT_WARM = 0xD8B898;  // 50 < totalCpu <= 100
+const HEAT_COOL = 0xC0D0A0;  // 10 < totalCpu <= 50
+const HEAT_COLD = 0x90B8C8;  // totalCpu <= 10
 
 // ---------------------------------------------------------------------------
 // Pure functions (no THREE dependency — safe for Node.js tests)
@@ -22,7 +22,7 @@ const HEAT_COLD = 0x4488AA;  // totalCpu <= 10
  * Map a total CPU value to a hex colour integer.
  *
  * @param {number} totalCpu — sum of CPU percentages for the nearest group
- * @returns {number} hex colour (e.g. 0xCC3333)
+ * @returns {number} hex colour (e.g. 0xD09090)
  */
 export function cpuToHeatColor(totalCpu) {
   if (totalCpu > 100) return HEAT_HOT;

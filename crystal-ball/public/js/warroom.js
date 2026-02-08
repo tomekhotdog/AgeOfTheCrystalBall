@@ -178,7 +178,7 @@ export class WarRoom {
   // ── Update (called each poll cycle) ──────────────────────────────────────
 
   /**
-   * @param {{ sessions: Array<{id: string, state: string, group: string, cpu?: number, mem?: number}>, groups: Array<{id: string, session_ids?: string[]}> }} apiData
+   * @param {{ sessions: Array<{id: string, state: string, group: string, cpu?: number, mem?: number}>, groups: Array<{id: string, session_ids?: string[], owners?: string[]}>, users?: Array<{name: string, color: string, sessionCount: number}> }} apiData
    */
   update(apiData) {
     const sessions = apiData.sessions || [];
@@ -199,7 +199,7 @@ export class WarRoom {
     }
 
     // --- Army Overview ---
-    this._renderOverview(sessions);
+    this._renderOverview(sessions, apiData.users);
 
     // --- Mode 2 Intel ---
     this._renderMode2(sessions);
@@ -213,8 +213,11 @@ export class WarRoom {
 
   // ── Internal renderers ───────────────────────────────────────────────────
 
-  /** @param {Array} sessions */
-  _renderOverview(sessions) {
+  /**
+   * @param {Array} sessions
+   * @param {Array|undefined} users
+   */
+  _renderOverview(sessions, users) {
     const counts = { active: 0, awaiting: 0, blocked: 0, idle: 0, stale: 0 };
     let totalCpu = 0;
     let totalMem = 0;
@@ -233,7 +236,17 @@ export class WarRoom {
     const pct = (n) => total > 0 ? (n / total * 100).toFixed(1) : 0;
 
     const body = this.el.querySelector('.warroom-overview-body');
+    const playersHtml = users && users.length > 0
+      ? `<div class="warroom-stat-row">
+        <span class="warroom-stat-label">Players Online</span>
+        <span class="warroom-stat-value">${users.length}</span>
+      </div>
+      <div class="warroom-stat-row" style="font-size:11px;opacity:0.7;flex-wrap:wrap;gap:4px;">
+        ${users.map(u => `<span><span class="owner-dot" style="background:${esc(u.color)}"></span> ${esc(u.name)}</span>`).join(' ')}
+      </div>`
+      : '';
     body.innerHTML = `
+      ${playersHtml}
       <div class="warroom-stat-row">
         <span class="warroom-stat-label">Total Sessions</span>
         <span class="warroom-stat-value">${total}</span>
@@ -256,7 +269,7 @@ export class WarRoom {
       <div class="warroom-stat-row" style="font-size:11px;opacity:0.7;">
         <span>${counts.active} active</span>
         <span>${counts.awaiting} awaiting</span>
-        ${counts.blocked > 0 ? `<span style="color:#C41E3A">${counts.blocked} blocked</span>` : ''}
+        ${counts.blocked > 0 ? `<span style="color:#C8908A">${counts.blocked} blocked</span>` : ''}
         <span>${counts.idle} idle</span>
         <span>${counts.stale} stale</span>
       </div>
@@ -276,6 +289,18 @@ export class WarRoom {
       groupSessionMap.get(gid).push(s);
     }
 
+    // Build owners map from groups data
+    const ownersMap = new Map();
+    for (const g of groups) {
+      if (g.owners) ownersMap.set(g.id, g.owners);
+    }
+
+    // Build ownerColor lookup from sessions
+    const ownerColorMap = new Map();
+    for (const s of sessions) {
+      if (s.owner && s.ownerColor) ownerColorMap.set(s.owner, s.ownerColor);
+    }
+
     const groupsWithSessions = [];
     for (const [id, sess] of groupSessionMap) {
       groupsWithSessions.push({ id, sessions: sess });
@@ -293,9 +318,13 @@ export class WarRoom {
       </tr>`;
 
     for (const r of rows) {
+      const owners = ownersMap.get(r.id);
+      const ownerDots = owners
+        ? owners.map(o => `<span class="owner-dot" style="background:${esc(ownerColorMap.get(o) || '#A8D0E0')}" title="${esc(o)}"></span>`).join('')
+        : '';
       html += `
       <tr>
-        <td>${esc(r.id)}</td>
+        <td>${esc(r.id)} ${ownerDots}</td>
         <td>${r.unitCount}</td>
         <td>${r.activeCount}</td>
         <td>${r.avgCpu.toFixed(1)}%</td>
@@ -337,7 +366,7 @@ export class WarRoom {
 
     const blockedHtml = blockedSessions.length > 0
       ? blockedSessions.map(s =>
-          `<div style="color:#C41E3A;font-size:11px;">${esc(s.id)} (${esc(s.group)}) - ${esc(s.context?.detail || 'blocked')}</div>`
+          `<div style="color:#C8908A;font-size:11px;">${esc(s.id)} (${esc(s.group)}) - ${esc(s.context?.detail || 'blocked')}</div>`
         ).join('')
       : '';
 

@@ -25,7 +25,7 @@ export function platoonColor(groupName) {
 
 // Shared materials (created once, reused across all bars)
 const BG_MATERIAL = new THREE.MeshBasicMaterial({
-  color: 0x1a1a2e,
+  color: 0x3A3848,
   transparent: true,
   opacity: 0.6,
   side: THREE.DoubleSide,
@@ -33,9 +33,9 @@ const BG_MATERIAL = new THREE.MeshBasicMaterial({
 });
 
 const FILL_MATERIALS = {
-  active:  new THREE.MeshBasicMaterial({ color: 0x4ade80, side: THREE.DoubleSide, depthTest: false }),
-  awaiting: new THREE.MeshBasicMaterial({ color: 0xe8c84a, side: THREE.DoubleSide, depthTest: false }),
-  idle:    new THREE.MeshBasicMaterial({ color: 0x9e9e9e, side: THREE.DoubleSide, depthTest: false }),
+  active:  new THREE.MeshBasicMaterial({ color: 0xA8D0B0, side: THREE.DoubleSide, depthTest: false }),
+  awaiting: new THREE.MeshBasicMaterial({ color: 0xE0D0A8, side: THREE.DoubleSide, depthTest: false }),
+  idle:    new THREE.MeshBasicMaterial({ color: 0xC0B8C0, side: THREE.DoubleSide, depthTest: false }),
 };
 
 const BAR_WIDTH = 1.2;

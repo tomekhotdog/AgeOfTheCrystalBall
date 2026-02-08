@@ -1,166 +1,149 @@
-// activities.js — Activity palette mapping activity names to animation functions.
-import { animBob, animRock, animSway, animScribe, animKneel, animPatrol } from './animations.js';
+// activities.js -- Phase-named activity palette for animation.
+import {
+  animBob, animRock, animSway, animScribe, animKneel, animPatrol,
+  animStrike, animHeadTilt, animBreathingPulse, animWalkStopExamine,
+  animHeadNod, animTremor,
+} from './animations.js';
 
 /**
- * @typedef {{ name: string, animate: (mesh: THREE.Group, time: number, delta: number) => void }} Activity
- * @typedef {{ energetic: Activity, passive: Activity }} ActivityPair
+ * @typedef {{ name: string, animate: (mesh: THREE.Group, time: number, delta: number) => void, controlsPosition?: boolean }} Activity
+ * @typedef {{ energetic: Activity, passive: Activity }} ActivityEntry
  */
 
-/** @type {ActivityPair[]} */
-export const ACTIVITY_PAIRS = [
-  // 1. Building (hammering) / Scribing (writing)
-  {
+/** @type {Object<string, ActivityEntry>} */
+export const ACTIVITIES = {
+  coding: {
     energetic: {
-      name: 'Building',
+      name: 'coding-energetic',
       animate(mesh, time, _delta) {
-        animBob(mesh, time);
-        animRock(mesh, time * 1.8); // faster rocking = hammering rhythm
+        animStrike(mesh, time);
+        animRock(mesh, time * 1.8);
       },
     },
     passive: {
-      name: 'Scribing',
+      name: 'coding-passive',
       animate(mesh, time, _delta) {
         animScribe(mesh, time);
-        animSway(mesh, time * 0.4); // gentle sway while writing
+        animSway(mesh, time * 0.4);
       },
     },
   },
 
-  // 2. Mining (pickaxe) / Praying (kneeling)
-  {
+  researching: {
     energetic: {
-      name: 'Mining',
+      name: 'researching-energetic',
+      controlsPosition: true,
       animate(mesh, time, _delta) {
-        animBob(mesh, time * 1.3);
-        animRock(mesh, time * 2.0); // vigorous rocking = pickaxe swings
+        animPatrol(mesh, time, 1.5);
       },
     },
     passive: {
-      name: 'Praying',
+      name: 'researching-passive',
+      controlsPosition: true,
+      animate(mesh, time, _delta) {
+        animWalkStopExamine(mesh, time, 0.6);
+      },
+    },
+  },
+
+  planning: {
+    energetic: {
+      name: 'planning-energetic',
+      animate(mesh, time, _delta) {
+        animHeadTilt(mesh, time);
+        animSway(mesh, time);
+      },
+    },
+    passive: {
+      name: 'planning-passive',
+      animate(mesh, time, _delta) {
+        animBreathingPulse(mesh, time);
+      },
+    },
+  },
+
+  testing: {
+    energetic: {
+      name: 'testing-energetic',
+      animate(mesh, time, _delta) {
+        animStrike(mesh, time * 1.3);
+        animRock(mesh, time * 2.5);
+      },
+    },
+    passive: {
+      name: 'testing-passive',
       animate(mesh, time, _delta) {
         animKneel(mesh, time);
-        animSway(mesh, time * 0.3); // very gentle sway in prayer
+        animSway(mesh, time * 0.3);
+        animTremor(mesh, time);
       },
     },
   },
 
-  // 3. Chopping (axe swing) / Resting (campfire)
-  {
+  reviewing: {
     energetic: {
-      name: 'Chopping',
+      name: 'reviewing-energetic',
       animate(mesh, time, _delta) {
-        animBob(mesh, time * 0.8);
-        animRock(mesh, time * 2.5); // sharp rocking = axe swings
-      },
-    },
-    passive: {
-      name: 'Resting',
-      animate(mesh, time, _delta) {
-        // Slow gentle bob as if sitting by a campfire.
-        const baseY = mesh.userData.baseY ?? 0;
-        mesh.position.y = baseY + Math.sin(time * 0.5 * Math.PI) * 0.02;
-        animSway(mesh, time * 0.2);
-      },
-    },
-  },
-
-  // 4. Smelting (furnace) / Foraging (wandering)
-  {
-    energetic: {
-      name: 'Smelting',
-      animate(mesh, time, _delta) {
-        animBob(mesh, time * 1.1);
-        animRock(mesh, time * 1.4);
-      },
-    },
-    passive: {
-      name: 'Foraging',
-      animate(mesh, time, _delta) {
-        // Slow wandering circle — small radius.
-        animPatrol(mesh, time, 0.6);
-        animBob(mesh, time * 0.6);
-      },
-    },
-  },
-
-  // 5. Fishing (casting) / Patrolling (walking loop)
-  {
-    energetic: {
-      name: 'Fishing',
-      animate(mesh, time, _delta) {
-        // Casting motion: periodic forward lean + bob.
-        const cycle = time % 4; // 4-second cast cycle
+        // Fishing cast motion
+        const cycle = time % 4;
         if (cycle < 1.0) {
-          // Wind-up
           mesh.rotation.x = -0.2 * cycle;
         } else if (cycle < 1.5) {
-          // Cast forward
           mesh.rotation.x = 0.3;
         } else {
-          // Waiting
           mesh.rotation.x = 0.05;
         }
         animBob(mesh, time * 0.5);
       },
     },
     passive: {
-      name: 'Patrolling',
+      name: 'reviewing-passive',
+      controlsPosition: true,
       animate(mesh, time, _delta) {
-        animPatrol(mesh, time, 1.5);
+        animWalkStopExamine(mesh, time, 0.6);
+        animBob(mesh, time * 0.6);
       },
     },
   },
-];
 
-/**
- * Returns the activity pair for a given group index (deterministic per index).
- * @param {number} groupIndex
- * @returns {ActivityPair}
- */
-export function getActivityForGroup(groupIndex) {
-  return ACTIVITY_PAIRS[((groupIndex % ACTIVITY_PAIRS.length) + ACTIVITY_PAIRS.length) % ACTIVITY_PAIRS.length];
-}
-
-// ── Mode 2: Phase-driven activity mapping ─────────────────────────────────
-
-/**
- * Maps sidecar phases to activity pairs for Mode 2 sessions.
- * Each phase uses semantically appropriate animations.
- * @type {Object<string, {energetic: string, passive: string}>}
- */
-export const PHASE_ACTIVITY_MAP = {
-  planning:     { energetic: 'Scribing',    passive: 'Scribing' },
-  researching:  { energetic: 'Patrolling',  passive: 'Patrolling' },
-  coding:       { energetic: 'Building',    passive: 'Scribing' },
-  testing:      { energetic: 'Mining',      passive: 'Praying' },
-  debugging:    { energetic: 'Mining',      passive: 'Mining' },
-  reviewing:    { energetic: 'Patrolling',  passive: 'Foraging' },
-  documenting:  { energetic: 'Scribing',    passive: 'Scribing' },
-  idle:         { energetic: 'Resting',     passive: 'Resting' },
+  idle: {
+    energetic: {
+      name: 'idle-energetic',
+      animate(mesh, time, _delta) {
+        animBreathingPulse(mesh, time);
+        animSway(mesh, time);
+      },
+    },
+    passive: {
+      name: 'idle-passive',
+      animate(mesh, time, _delta) {
+        animHeadNod(mesh, time);
+      },
+    },
+  },
 };
 
-// Build a lookup from activity name to activity object
-const _activityByName = new Map();
-for (const pair of ACTIVITY_PAIRS) {
-  _activityByName.set(pair.energetic.name, pair.energetic);
-  _activityByName.set(pair.passive.name, pair.passive);
+const _activityValues = Object.values(ACTIVITIES);
+
+/**
+ * Returns the activity entry for a given group index (deterministic per index).
+ * Cycles through the 6 phase-named activities.
+ * @param {number} groupIndex
+ * @returns {ActivityEntry}
+ */
+export function getActivityForGroup(groupIndex) {
+  const len = _activityValues.length;
+  return _activityValues[((groupIndex % len) + len) % len];
 }
 
 /**
- * Returns the activity pair for a session based on its sidecar phase.
+ * Returns the activity entry for a session based on its sidecar phase.
  * Falls back to group-based activity if phase is unknown.
  * @param {number} groupIndex
- * @param {string|null} phase - sidecar phase or null
- * @returns {ActivityPair}
+ * @param {string|null} phase
+ * @returns {ActivityEntry}
  */
 export function getActivityForSession(groupIndex, phase) {
-  const mapping = phase ? PHASE_ACTIVITY_MAP[phase] : null;
-  if (!mapping) return getActivityForGroup(groupIndex);
-
-  const energetic = _activityByName.get(mapping.energetic);
-  const passive = _activityByName.get(mapping.passive);
-
-  if (!energetic || !passive) return getActivityForGroup(groupIndex);
-
-  return { energetic, passive };
+  if (phase && ACTIVITIES[phase]) return ACTIVITIES[phase];
+  return getActivityForGroup(groupIndex);
 }

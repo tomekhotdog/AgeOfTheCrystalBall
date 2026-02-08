@@ -20,60 +20,60 @@ import {
 
 describe('cpuToHeatColor', () => {
   describe('threshold boundaries', () => {
-    it('returns cold (0x4488AA) for totalCpu = 0', () => {
-      assert.equal(cpuToHeatColor(0), 0x4488AA);
+    it('returns cold (0x90B8C8) for totalCpu = 0', () => {
+      assert.equal(cpuToHeatColor(0), 0x90B8C8);
     });
 
-    it('returns cold (0x4488AA) for totalCpu = 10 (at boundary)', () => {
-      assert.equal(cpuToHeatColor(10), 0x4488AA);
+    it('returns cold (0x90B8C8) for totalCpu = 10 (at boundary)', () => {
+      assert.equal(cpuToHeatColor(10), 0x90B8C8);
     });
 
-    it('returns cool (0xBBCC44) for totalCpu = 10.01 (just above cold boundary)', () => {
-      assert.equal(cpuToHeatColor(10.01), 0xBBCC44);
+    it('returns cool (0xC0D0A0) for totalCpu = 10.01 (just above cold boundary)', () => {
+      assert.equal(cpuToHeatColor(10.01), 0xC0D0A0);
     });
 
-    it('returns cool (0xBBCC44) for totalCpu = 50 (at boundary)', () => {
-      assert.equal(cpuToHeatColor(50), 0xBBCC44);
+    it('returns cool (0xC0D0A0) for totalCpu = 50 (at boundary)', () => {
+      assert.equal(cpuToHeatColor(50), 0xC0D0A0);
     });
 
-    it('returns warm (0xE8843A) for totalCpu = 50.01 (just above cool boundary)', () => {
-      assert.equal(cpuToHeatColor(50.01), 0xE8843A);
+    it('returns warm (0xD8B898) for totalCpu = 50.01 (just above cool boundary)', () => {
+      assert.equal(cpuToHeatColor(50.01), 0xD8B898);
     });
 
-    it('returns warm (0xE8843A) for totalCpu = 100 (at boundary)', () => {
-      assert.equal(cpuToHeatColor(100), 0xE8843A);
+    it('returns warm (0xD8B898) for totalCpu = 100 (at boundary)', () => {
+      assert.equal(cpuToHeatColor(100), 0xD8B898);
     });
 
-    it('returns hot (0xCC3333) for totalCpu = 100.01 (just above warm boundary)', () => {
-      assert.equal(cpuToHeatColor(100.01), 0xCC3333);
+    it('returns hot (0xD09090) for totalCpu = 100.01 (just above warm boundary)', () => {
+      assert.equal(cpuToHeatColor(100.01), 0xD09090);
     });
   });
 
   describe('values within ranges', () => {
     it('returns cold for totalCpu = 5', () => {
-      assert.equal(cpuToHeatColor(5), 0x4488AA);
+      assert.equal(cpuToHeatColor(5), 0x90B8C8);
     });
 
     it('returns cool for totalCpu = 30', () => {
-      assert.equal(cpuToHeatColor(30), 0xBBCC44);
+      assert.equal(cpuToHeatColor(30), 0xC0D0A0);
     });
 
     it('returns warm for totalCpu = 75', () => {
-      assert.equal(cpuToHeatColor(75), 0xE8843A);
+      assert.equal(cpuToHeatColor(75), 0xD8B898);
     });
 
     it('returns hot for totalCpu = 200', () => {
-      assert.equal(cpuToHeatColor(200), 0xCC3333);
+      assert.equal(cpuToHeatColor(200), 0xD09090);
     });
 
     it('returns hot for very high CPU (500)', () => {
-      assert.equal(cpuToHeatColor(500), 0xCC3333);
+      assert.equal(cpuToHeatColor(500), 0xD09090);
     });
   });
 
   describe('edge cases', () => {
     it('returns cold for negative CPU values', () => {
-      assert.equal(cpuToHeatColor(-10), 0x4488AA);
+      assert.equal(cpuToHeatColor(-10), 0x90B8C8);
     });
   });
 });
@@ -272,7 +272,7 @@ describe('computeTileCpuMap', () => {
       const result = computeTileCpuMap(tiles, buildings, sessionsByGroup);
       const cpu = result.get('0,0');
       assert.equal(cpu, 5);
-      assert.equal(cpuToHeatColor(cpu), 0x4488AA); // cold
+      assert.equal(cpuToHeatColor(cpu), 0x90B8C8); // cold
     });
 
     it('produces hot-range CPU for a high-activity group', () => {
@@ -285,7 +285,7 @@ describe('computeTileCpuMap', () => {
       const result = computeTileCpuMap(tiles, buildings, sessionsByGroup);
       const cpu = result.get('0,0');
       assert.equal(cpu, 185);
-      assert.equal(cpuToHeatColor(cpu), 0xCC3333); // hot
+      assert.equal(cpuToHeatColor(cpu), 0xD09090); // hot
     });
   });
 

@@ -134,7 +134,7 @@ function createZoomController(camera, domElement) {
 export function createScene() {
   // --- Scene ---
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xE8E0D4);
+  scene.background = new THREE.Color(0xE8E0DC);
 
   // --- Orthographic camera at true isometric angle ---
   const aspect = window.innerWidth / window.innerHeight;
@@ -155,7 +155,7 @@ export function createScene() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.setClearColor(0xE8E0D4);
+  renderer.setClearColor(0xE8E0DC);
 
   const container = document.getElementById('canvas-container');
   if (container) {
@@ -174,7 +174,7 @@ export function createScene() {
   document.body.appendChild(labelRenderer.domElement);
 
   // --- Lights (exported so the day/night module can tweak them) ---
-  const dirLight = new THREE.DirectionalLight(0xFFF5E6, 1.2);
+  const dirLight = new THREE.DirectionalLight(0xFFF0E8, 1.2);
   dirLight.position.set(5, 10, 5);
   dirLight.castShadow = true;
   dirLight.shadow.mapSize.width = 2048;
@@ -187,7 +187,7 @@ export function createScene() {
   dirLight.shadow.camera.far    =  50;
   scene.add(dirLight);
 
-  const ambientLight = new THREE.AmbientLight(0x8899AA, 0.55);
+  const ambientLight = new THREE.AmbientLight(0xA0AAB8, 0.6);
   scene.add(ambientLight);
 
   // --- Zoom controller (scroll-wheel + smooth lerp) ---

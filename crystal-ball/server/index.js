@@ -1,6 +1,7 @@
 // server/index.js
-// Express app — serves the static UI and the /api/sessions endpoint.
+// Express app -- serves the static UI and the /api/sessions endpoint.
 // Polls the discovery backend on a timer and maintains an in-memory store.
+// Optionally publishes to a relay server for multi-person mode.
 
 import express from "express";
 import { fileURLToPath } from "node:url";
@@ -9,17 +10,25 @@ import path from "node:path";
 import { createDiscovery } from "./discovery/index.js";
 import { SessionClassifier } from "./classifier.js";
 import { SessionStore } from "./sessionStore.js";
+import { RelayPublisher } from "./relay/publisher.js";
+import { RelaySubscriber } from "./relay/subscriber.js";
+import { SharingSettings } from "./relay/sharingSettings.js";
+import { resolveIdentity } from "./relay/identity.js";
 
-// ── __dirname equivalent for ESM ────────────────────────────────────────────
+// -- __dirname equivalent for ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ── CLI flag parsing ────────────────────────────────────────────────────────
+// -- CLI flag parsing
 function parseFlags(argv) {
   const flags = {
     port: 3000,
     pollInterval: 2000,   // ms
     simulate: false,
+    relayUrl: null,
+    userName: null,
+    userColor: null,
+    token: null,
   };
 
   for (let i = 2; i < argv.length; i++) {
@@ -31,13 +40,21 @@ function parseFlags(argv) {
       flags.pollInterval = Number(argv[++i]);
     } else if (arg === "--simulate") {
       flags.simulate = true;
+    } else if (arg === "--relay-url" && argv[i + 1]) {
+      flags.relayUrl = argv[++i];
+    } else if (arg === "--user-name" && argv[i + 1]) {
+      flags.userName = argv[++i];
+    } else if (arg === "--user-color" && argv[i + 1]) {
+      flags.userColor = argv[++i];
+    } else if (arg === "--token" && argv[i + 1]) {
+      flags.token = argv[++i];
     }
   }
 
   return flags;
 }
 
-// ── Main ────────────────────────────────────────────────────────────────────
+// -- Main
 async function main() {
   const flags = parseFlags(process.argv);
 
@@ -47,17 +64,54 @@ async function main() {
   }
 
   const mode = process.env.SIMULATE === "true" ? "simulate" : "live";
+  const isMulti = !!flags.relayUrl;
 
-  // ── Instantiate core objects ──────────────────────────────────────────
+  // -- Resolve user identity (for multi-person mode)
+  let identity = null;
+  if (isMulti) {
+    identity = await resolveIdentity({
+      userName: flags.userName,
+      userColor: flags.userColor,
+    });
+  }
+
+  // -- Instantiate core objects
   const discovery = await createDiscovery();
   const classifier = new SessionClassifier();
   const store = new SessionStore(classifier);
 
-  // ── Polling loop ──────────────────────────────────────────────────────
+  // -- Relay publisher/subscriber (multi-person mode)
+  let publisher = null;
+  let subscriber = null;
+  const sharingSettings = new SharingSettings();
+
+  if (isMulti) {
+    publisher = new RelayPublisher({
+      relayUrl: flags.relayUrl,
+      userName: identity.name,
+      userColor: identity.color,
+      token: flags.token,
+    });
+    subscriber = new RelaySubscriber({
+      relayUrl: flags.relayUrl,
+      token: flags.token,
+    });
+    await sharingSettings.load();
+  }
+
+  // -- Polling loop
   async function poll() {
     try {
       const rawSessions = await discovery.discoverSessions();
       await store.update(rawSessions);
+
+      // Publish to relay if sharing is enabled
+      if (publisher) {
+        const settings = sharingSettings.get();
+        if (settings.enabled) {
+          await publisher.publish(store.getLatest(), settings.excludedGroups);
+        }
+      }
     } catch (err) {
       console.error("[poll] discovery error:", err);
     }
@@ -67,7 +121,7 @@ async function main() {
   await poll();
   setInterval(poll, flags.pollInterval);
 
-  // ── Express setup ─────────────────────────────────────────────────────
+  // -- Express setup
   const app = express();
   app.use(express.json());
 
@@ -75,9 +129,44 @@ async function main() {
   const perfSnapshots = [];
   const MAX_PERF_SNAPSHOTS = 60;
 
-  // API
+  // API -- local sessions (always available, unchanged)
   app.get("/api/sessions", (_req, res) => {
     res.json(store.getLatest());
+  });
+
+  // API -- mode detection (tells the frontend if multi-person is available)
+  app.get("/api/mode", (_req, res) => {
+    res.json({
+      mode: isMulti ? "multi" : "local",
+      user: identity,
+      relay: flags.relayUrl || null,
+    });
+  });
+
+  // API -- combined view (proxy to relay subscriber)
+  app.get("/api/combined", async (_req, res) => {
+    if (!subscriber) {
+      return res.status(404).json({ error: "No relay configured" });
+    }
+    const data = await subscriber.fetchCombined();
+    if (!data) {
+      return res.status(502).json({ error: "Relay unavailable" });
+    }
+    res.json(data);
+  });
+
+  // API -- sharing settings
+  app.get("/api/sharing", (_req, res) => {
+    res.json(sharingSettings.get());
+  });
+
+  app.put("/api/sharing", async (req, res) => {
+    try {
+      await sharingSettings.save(req.body);
+      res.json(sharingSettings.get());
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   app.post("/api/perf", (req, res) => {
@@ -99,11 +188,15 @@ async function main() {
   const publicDir = path.join(__dirname, "..", "public");
   app.use(express.static(publicDir));
 
-  // ── Start listening ───────────────────────────────────────────────────
+  // -- Start listening
   app.listen(flags.port, () => {
     console.log(`\n  Crystal Ball server running`);
     console.log(`  Mode : ${mode}`);
     console.log(`  Poll : every ${flags.pollInterval} ms`);
+    if (isMulti) {
+      console.log(`  Relay: ${flags.relayUrl}`);
+      console.log(`  User : ${identity.name} (${identity.color})`);
+    }
     console.log(`  URL  : http://localhost:${flags.port}\n`);
   });
 }

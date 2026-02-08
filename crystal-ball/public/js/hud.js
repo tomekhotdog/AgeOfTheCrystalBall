@@ -81,6 +81,16 @@ export function updateHUD(apiData) {
     elAwaitMinutes.textContent = metrics.awaitingAgentMinutes.toFixed(1);
   }
 
+  // ── Multi-person players count ───────────────────────────────────────
+  const elPlayers = document.getElementById('hud-players');
+  const playersStat = elPlayers ? elPlayers.closest('.hud-stat') : null;
+  if (elPlayers && apiData.users) {
+    elPlayers.textContent = apiData.users.length;
+    if (playersStat) playersStat.style.display = '';
+  } else if (playersStat) {
+    playersStat.style.display = 'none';
+  }
+
   if (elLongestWait && metrics) {
     const lw = metrics.longestWait;
     if (lw && lw.sessionId) {

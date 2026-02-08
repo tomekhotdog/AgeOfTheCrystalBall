@@ -25,6 +25,9 @@ import { DoubleClickHandler } from './doubleClick.js';
 import { MemoryScaler } from './memoryScale.js';
 import { PerfMonitor } from './perfMonitor.js';
 import { computeEdgeScrollDir } from './edgeScroll.js';
+import { createLanterns, updateLanterns } from './lanterns.js';
+import { RosterPanel } from './roster.js';
+import { SharingPanel } from './sharingPanel.js';
 
 // ---------------------------------------------------------------------------
 // Init
@@ -80,6 +83,9 @@ async function init() {
 
   // Latest data received from the API (shared closure)
   let latestApiData = { timestamp: null, sessions: [], groups: [] };
+
+  // Lanterns (created once after first buildings appear)
+  let lanterns = null;
 
   // Forward-declared: doubleClickHandler (needs selectionManager which is below)
   let doubleClickHandler = null;
@@ -201,6 +207,7 @@ async function init() {
     if (key === 'tab') { e.preventDefault(); warRoom.toggle(); }
     if (key === 'm') minimap.toggle();
     if (key === 'h') heatmap.toggle();
+    if (key === 'u') rosterPanel.toggle();
     if (key === '?' || key === '/') {
       const helpEl = document.getElementById('hotkey-help');
       if (helpEl) helpEl.classList.toggle('hidden');
@@ -227,7 +234,8 @@ async function init() {
   const poller = new ApiPoller(2000);
   let firstDataReceived = false;
 
-  poller.start((data) => {
+  // Detect mode before first poll (async start)
+  await poller.start((data) => {
     latestApiData = data;
     worldManager.update(data);
     updateHUD(data);
@@ -237,11 +245,17 @@ async function init() {
     memoryScaler.updateTargets(data.sessions);
     victoryScreen.update(data.sessions, particles);
 
+    // Update multi-person panels
+    if (rosterPanel) rosterPanel.update(data);
+    if (sharingPanel) sharingPanel.updateGroups(data);
+
     if (!firstDataReceived) {
       firstDataReceived = true;
       loadingScreen.setProgress(1.0);
       // Add decorations after first world update so buildings are placed
       terrain.addDecorations(scene);
+      // Place lanterns between buildings
+      lanterns = createLanterns(scene, worldManager.getBuildingPositions(), terrain);
       // Merge static geometry to cut draw calls
       const mergeResult = terrain.mergeStaticGeometry();
       heatmap.setMergeSwap(mergeResult);
@@ -249,6 +263,10 @@ async function init() {
       onFirstData();
     }
   });
+
+  // ── 20b. Multi-person panels (after mode detection) ────────────────
+  const rosterPanel = new RosterPanel(poller.userInfo);
+  const sharingPanel = new SharingPanel(poller.mode);
 
   // ── 21. Camera intro (after loading screen hides) ───────────────────
   let cameraIntro = null;
@@ -310,6 +328,15 @@ async function init() {
     if (qualityHigh) {
       bloomPass.strength = phase === 'night' ? 0.6 : phase === 'dusk' ? 0.45 : 0.3;
     }
+    if (lanterns) {
+      updateLanterns(lanterns, phase, dayNight.getPhaseProgress());
+    }
+
+    // Night factor (0-1) for building glow — same ramp as lanterns
+    let nightFactor = 0;
+    if (phase === 'night') nightFactor = 1;
+    else if (phase === 'dusk') nightFactor = dayNight.getPhaseProgress();
+    else if (phase === 'dawn') nightFactor = 1 - dayNight.getPhaseProgress();
 
     // Memory-based size scaling
     perf.mark('memScale');
@@ -317,7 +344,7 @@ async function init() {
 
     // World (units, buildings, activities, state visuals, march-in)
     perf.mark('world');
-    worldManager.animate(elapsed, delta);
+    worldManager.animate(elapsed, delta, nightFactor);
 
     // Particle effects
     perf.mark('particles');
@@ -326,6 +353,9 @@ async function init() {
     // Health bar billboards (face camera)
     perf.mark('healthbars');
     healthBars.updateAllBillboards(camera);
+
+    // Minimap viewport (per-frame for smooth tracking)
+    minimap.drawViewport();
 
     // Water animation
     perf.mark('water');

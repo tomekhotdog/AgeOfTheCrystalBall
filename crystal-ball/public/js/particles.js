@@ -131,7 +131,7 @@ export class ParticleSystem {
   spawnBuilderSparks(position) {
     const count = randInt(8, 12);
     const { geometry, posAttr } = makeParticleGeometry(position, count);
-    const material = makePointsMaterial(0xE8843A, rand(3, 5));
+    const material = makePointsMaterial(0xE0B898, rand(3, 5));
 
     const velocities = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
@@ -167,7 +167,7 @@ export class ParticleSystem {
   spawnScholarPages(position) {
     const count = randInt(3, 5);
     const { geometry, posAttr } = makeParticleGeometry(position, count);
-    const material = makePointsMaterial(0xF0E8D8, rand(4, 6));
+    const material = makePointsMaterial(0xF5F0E8, rand(4, 6));
 
     const velocities = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
@@ -209,7 +209,7 @@ export class ParticleSystem {
     geometry.rotateX(-Math.PI / 2);
 
     const material = new THREE.MeshBasicMaterial({
-      color: 0xE8C84A,
+      color: 0xE0D0A8,
       transparent: true,
       opacity: 0.8,
       side: THREE.DoubleSide,
@@ -258,7 +258,7 @@ export class ParticleSystem {
   spawnGhostWisps(position, direction) {
     const count = randInt(4, 6);
     const { geometry, posAttr } = makeParticleGeometry(position, count);
-    const material = makePointsMaterial(0x888888, rand(3, 4), 0.6);
+    const material = makePointsMaterial(0xB0A8B0, rand(3, 4), 0.6);
 
     // If a direction is given, bias velocities along it; otherwise random drift
     const dx = direction ? direction.x * 0.2 : 0;
@@ -300,7 +300,7 @@ export class ParticleSystem {
     // Place at ground level
     const groundPos = new THREE.Vector3(position.x, 0.05, position.z);
     const { geometry, posAttr } = makeParticleGeometry(groundPos, count);
-    const material = makePointsMaterial(0xA8956E, rand(2, 4), 0.7);
+    const material = makePointsMaterial(0xC8B8A0, rand(2, 4), 0.7);
 
     const velocities = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
@@ -339,7 +339,7 @@ export class ParticleSystem {
   spawnDeathMotes(position) {
     const count = randInt(8, 10);
     const { geometry, posAttr } = makeParticleGeometry(position, count);
-    const material = makePointsMaterial(0xFFE4A0, rand(3, 5));
+    const material = makePointsMaterial(0xF0E0C8, rand(3, 5));
 
     const velocities = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {

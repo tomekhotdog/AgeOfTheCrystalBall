@@ -110,7 +110,24 @@ export class WorldManager {
       unit.session = session;
     }
 
-    // ── 6. Update health bars for each building ──────────────────────────
+    // ── 6. Update building labels with owner dots (multi-person) ────────
+    for (const group of apiData.groups) {
+      const bldg = this.buildings.get(group.id);
+      if (!bldg || !group.owners || !bldg.label) continue;
+      const labelDiv = bldg.label.element;
+      // Build owner dots from users data (resolve color from sessions)
+      let dotsHtml = '';
+      if (apiData.users) {
+        const colorMap = new Map();
+        for (const u of apiData.users) colorMap.set(u.name, u.color);
+        dotsHtml = group.owners
+          .map(o => `<span class="owner-dot" style="background:${colorMap.get(o) || '#A8D0E0'}"></span>`)
+          .join('');
+      }
+      labelDiv.innerHTML = `${group.id} ${dotsHtml}`;
+    }
+
+    // ── 7. Update health bars for each building ──────────────────────────
     if (this.healthBars) {
       // Precompute sessions grouped by group ID (O(n) instead of O(m*n))
       const sessionsByGroup = new Map();
@@ -176,6 +193,14 @@ export class WorldManager {
       ? this.healthBars.createHealthBar(mesh)
       : null;
 
+    // Cache night glow refs (PointLight + emissive window meshes)
+    const buildingGlow = mesh.getObjectByName('buildingGlow');
+    const buildingGlowBase = buildingGlow ? buildingGlow.intensity : 0;
+    const windowGlows = [];
+    mesh.traverse(child => {
+      if (child.name === 'windowGlow') windowGlows.push(child);
+    });
+
     this.buildings.set(group.id, {
       mesh,
       type: buildingType,
@@ -187,6 +212,9 @@ export class WorldManager {
       label,
       healthBar,
       abandoned: false,
+      buildingGlow,
+      buildingGlowBase,
+      windowGlows,
     });
   }
 
@@ -348,6 +376,18 @@ export class WorldManager {
     this.units.delete(sessionId);
   }
 
+  /**
+   * Return world positions of all buildings (for lantern placement etc.).
+   * @returns {{ x: number, z: number }[]}
+   */
+  getBuildingPositions() {
+    const positions = [];
+    for (const [, bldg] of this.buildings) {
+      positions.push({ x: bldg.position.x, z: bldg.position.z });
+    }
+    return positions;
+  }
+
   // ---------------------------------------------------------------------------
   // animate — called every frame
   // ---------------------------------------------------------------------------
@@ -357,7 +397,7 @@ export class WorldManager {
    * @param {number} time  — elapsed time in seconds
    * @param {number} delta — time since last frame in seconds
    */
-  animate(time, delta) {
+  animate(time, delta, nightFactor = 0) {
     // ── March-in and gravestone updates ──────────────────────────────────
     if (this.marchInManager) {
       const completedMarches = this.marchInManager.updateMarches(delta);
@@ -398,7 +438,7 @@ export class WorldManager {
         const activity = isEnergetic ? activityPair.energetic : activityPair.passive;
         // Scale time by speedMultiplier for slower idle/awaiting animations
         activity.animate(mesh, time * speedMultiplier, delta);
-        usesPatrol = activity.name === 'Patrolling' || activity.name === 'Foraging';
+        usesPatrol = activity.controlsPosition === true;
       } else if (speedMultiplier > 0) {
         animBob(mesh, time * speedMultiplier);
       }
@@ -420,12 +460,21 @@ export class WorldManager {
       }
     }
 
-    // ── Building idle animations (subtle) ────────────────────────────────
+    // ── Building idle animations + night glow ──────────────────────────
     for (const [, bldg] of this.buildings) {
       if (bldg.abandoned) continue;
       // Gentle breathing scale on Y axis
       const scale = 1.0 + Math.sin(time * 0.5) * 0.005;
       bldg.mesh.scale.setY(scale);
+
+      // Drive night glow on building PointLight
+      if (bldg.buildingGlow) {
+        bldg.buildingGlow.intensity = bldg.buildingGlowBase + nightFactor * 0.5;
+      }
+      // Drive emissive window glow
+      for (const w of bldg.windowGlows) {
+        w.material.emissiveIntensity = nightFactor * 0.6;
+      }
     }
   }
 

@@ -7,8 +7,8 @@ import * as THREE from 'three';
 // ---------------------------------------------------------------------------
 
 const PALETTE = {
-  unitBody:    0xD4B892,
-  unitHead:    0xF0E0D0,
+  unitBody:    0xDCC8B0,
+  unitHead:    0xF0E8E0,
 };
 
 // ---------------------------------------------------------------------------
@@ -32,13 +32,13 @@ function cachedMat(key, factory) {
 
 /** Role-specific accent colours (GR palette). */
 const CLASS_COLORS = {
-  Engineer:   0xF09448,
-  Researcher: 0x89CFF0,
-  Intern:     0x8ECF9A,
-  Analyst:    0xFFD700,
-  Principal:  0xB08EEC,
-  Security:   0x888888,
-  Barista:    0xA0826D,
+  Engineer:   0xE0B890,
+  Researcher: 0xA8D0E0,
+  Intern:     0xB0D4B8,
+  Analyst:    0xE8D0A8,
+  Principal:  0xC0A8D8,
+  Security:   0xB0AAB0,
+  Barista:    0xC4A898,
 };
 
 /** Medieval names for deterministic assignment via PID. */
@@ -138,11 +138,11 @@ export function rankDisplayTitle(rank, unitClass) {
 
 /** Creates a small sphere pip above the head for the given rank. */
 function buildRankBadge(rank) {
-  const colorMap  = { bronze: 0xCD7F32, silver: 0xC0C0C0, gold: 0xFFD700 };
+  const colorMap  = { bronze: 0xD4A880, silver: 0xC8C4C8, gold: 0xE8D0A8 };
   const matOpts   = { color: colorMap[rank] };
 
   if (rank === 'gold') {
-    matOpts.emissive          = 0xFFD700;
+    matOpts.emissive          = 0xE8D0A8;
     matOpts.emissiveIntensity = 0.3;
   }
 
@@ -214,6 +214,12 @@ export function createUnit(session) {
   // --- Persistent name ---
   const unitName = nameFromPid(session.pid ?? hashStringToIndex(session.id || '', NAMES.length));
 
+  // --- Player banner (multi-person mode) ---
+  if (session.ownerColor) {
+    const banner = buildPlayerBanner(session.ownerColor);
+    if (banner) group.add(banner);
+  }
+
   // --- User data ---
   group.userData = {
     type:       'unit',
@@ -221,6 +227,8 @@ export function createUnit(session) {
     unitClass,
     unitName,
     rank,
+    owner:      session.owner || null,
+    ownerColor: session.ownerColor || null,
     baseY: 0,
     baseX: 0,
     baseZ: 0,
@@ -381,7 +389,7 @@ function buildCape(color) {
   const pin = new THREE.Mesh(
     cachedGeom('lapel-pin', () => new THREE.SphereGeometry(0.015, 6, 6)),
     cachedMat('lapel-pin-gold', () =>
-      new THREE.MeshLambertMaterial({ color: 0xFFD700, emissive: 0xFFD700, emissiveIntensity: 0.3 })),
+      new THREE.MeshLambertMaterial({ color: 0xE8D0A8, emissive: 0xE8D0A8, emissiveIntensity: 0.3 })),
   );
   pin.position.set(0.12, 0.4, 0.12);
   g.add(pin);
@@ -531,6 +539,40 @@ function buildLatteArtPlate() {
   swirl.position.set(0.2, 0.21, 0);
   swirl.rotation.x = Math.PI / 2;
   g.add(swirl);
+  return g;
+}
+
+// ---------------------------------------------------------------------------
+// Player Banner (multi-person mode)
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates a small colored flag banner above the unit to indicate player ownership.
+ * Pole is cached; flag material is per-unit (varies by color).
+ * @param {string} colorStr -- CSS hex color like '#FF6B6B'
+ * @returns {THREE.Group}
+ */
+function buildPlayerBanner(colorStr) {
+  const g = new THREE.Group();
+  g.name = 'playerBanner';
+
+  // Pole
+  const pole = new THREE.Mesh(
+    cachedGeom('banner-pole', () => new THREE.CylinderGeometry(0.008, 0.008, 0.25, 4)),
+    cachedMat('banner-pole-brown', () => new THREE.MeshLambertMaterial({ color: 0x6B5A3E })),
+  );
+  pole.position.set(-0.12, 0.72, -0.08);
+  g.add(pole);
+
+  // Flag -- per-unit material (color varies per player)
+  const colorNum = parseInt(colorStr.replace('#', ''), 16) || 0xA8D0E0;
+  const flag = new THREE.Mesh(
+    cachedGeom('banner-flag', () => new THREE.PlaneGeometry(0.12, 0.08)),
+    new THREE.MeshLambertMaterial({ color: colorNum, side: THREE.DoubleSide }),
+  );
+  flag.position.set(-0.06, 0.82, -0.08);
+  g.add(flag);
+
   return g;
 }
 

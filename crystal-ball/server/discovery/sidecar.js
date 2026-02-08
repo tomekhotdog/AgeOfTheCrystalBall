@@ -9,7 +9,7 @@ import { homedir } from 'node:os';
 
 export const VALID_PHASES = [
   'planning', 'researching', 'coding', 'testing',
-  'debugging', 'reviewing', 'documenting', 'idle',
+  'reviewing', 'idle',
 ];
 
 export const STALE_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes

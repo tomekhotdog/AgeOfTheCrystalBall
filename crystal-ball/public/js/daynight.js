@@ -7,10 +7,10 @@ import * as THREE from 'three';
 // Phase definitions
 // ---------------------------------------------------------------------------
 const PHASES = [
-  { name: 'dawn',  duration: 15,  dirColor: '#FFD0C0', dirIntensity: 1.5,  ambColor: '#CCAABB', ambIntensity: 0.8,  sky: '#E8D0C4' },
-  { name: 'day',   duration: 210, dirColor: '#FFF5E6', dirIntensity: 1.3,  ambColor: '#99AABB', ambIntensity: 0.55, sky: '#E8E0D4' },
-  { name: 'dusk',  duration: 15,  dirColor: '#FFAA70', dirIntensity: 1.5,  ambColor: '#BB9977', ambIntensity: 0.8,  sky: '#D4B088' },
-  { name: 'night', duration: 60,  dirColor: '#D8E4FF', dirIntensity: 1.8,  ambColor: '#AABBDD', ambIntensity: 1.0,  sky: '#5A6A90' },
+  { name: 'dawn',  duration: 15,  dirColor: '#F5D8D0', dirIntensity: 1.5,  ambColor: '#D0B8C8', ambIntensity: 0.8,  sky: '#F0DCD4' },
+  { name: 'day',   duration: 210, dirColor: '#FFF8F0', dirIntensity: 1.6,  ambColor: '#B8D0E0', ambIntensity: 0.7,  sky: '#D8E4EC' },
+  { name: 'dusk',  duration: 15,  dirColor: '#E8C0A8', dirIntensity: 1.5,  ambColor: '#C8B0A0', ambIntensity: 0.8,  sky: '#DCC4B0' },
+  { name: 'night', duration: 60,  dirColor: '#C8D0E8', dirIntensity: 1.8,  ambColor: '#B0B8D0', ambIntensity: 1.0,  sky: '#6A7090' },
 ];
 
 // Pre-computed total so we don't recalculate every frame.
@@ -174,6 +174,13 @@ export class DayNightCycle {
    */
   getPhase() {
     return this._current.phaseName;
+  }
+
+  /**
+   * @returns {number} 0.0 – 1.0 progress within the current phase.
+   */
+  getPhaseProgress() {
+    return this._current.phaseProgress;
   }
 
   /**

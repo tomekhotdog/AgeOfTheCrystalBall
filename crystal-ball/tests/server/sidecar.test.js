@@ -68,6 +68,20 @@ describe('sidecar validateSidecar()', () => {
     }
   });
 
+  it('should have exactly 6 valid phases', () => {
+    assert.equal(VALID_PHASES.length, 6);
+  });
+
+  it('should reject removed phase "debugging"', () => {
+    const { valid } = validateSidecar(freshPayload({ phase: 'debugging' }), NOW);
+    assert.equal(valid, false);
+  });
+
+  it('should reject removed phase "documenting"', () => {
+    const { valid } = validateSidecar(freshPayload({ phase: 'documenting' }), NOW);
+    assert.equal(valid, false);
+  });
+
   it('should reject missing updated_at', () => {
     const { valid } = validateSidecar(freshPayload({ updated_at: undefined }), NOW);
     assert.equal(valid, false);

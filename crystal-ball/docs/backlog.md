@@ -45,6 +45,13 @@ Everything remaining. Consolidated from the V1 design doc, V1 addendum, and futu
 - **Effort:** Medium. **Impact:** Medium.
 - **Files:** public/js/worldManager.js (anchor generation strategies)
 
+### Hook Phase Inference Gaps (#28)
+- Write/Edit on `.md` files currently inferred as `coding`, could be `reviewing` (since documenting was folded into reviewing). Hook would need to inspect `file_path` extension.
+- Re-runs of recently failed test commands currently fall to default `coding`, could be `testing`. Hard in a stateless hook (would need to remember last test command).
+- No hook event maps to a `debugging` phase (now folded into `coding`, so moot unless we want sub-phase granularity later).
+- **Effort:** Low-medium. **Impact:** Low.
+- **Files:** hooks/crystal-ball-hook.sh
+
 ---
 
 ## Tier 2: Stretch Goals (from V1 design)
@@ -78,60 +85,41 @@ Everything remaining. Consolidated from the V1 design doc, V1 addendum, and futu
 
 ---
 
-## Tier 3: Multi-Person View (from V1 addendum, not started)
+## Tier 3: Multi-Person View -- COMPLETE
 
-A separate feature set that enables multiple users to share session state via a central relay server.
+Implemented. Relay server at `crystal-ball-relay/`, local daemon relay modules at `server/relay/`, frontend panels (roster, sharing).
 
-### Architecture
-```
-[User A machine]          [User B machine]
-  Local daemon              Local daemon
-  +-- Relay client --+ +-- Relay client
-                      v v
-              [Central Relay Server]
-              +-- Combined state API
-```
+**Demo:** Run `npm run demo:relay`, `npm run demo:local`, `npm run demo:bot` in three terminals. Open `localhost:3000`.
 
-### Relay Server (new project: crystal-ball-relay/)
-- Separate Node.js + Express process
-- Accepts session snapshots from local daemons via POST /api/publish
-- Stores latest snapshot per user in memory (ephemeral)
-- Serves combined/filtered views via GET /api/combined
-- Expires snapshots after 30s (user offline)
-- GET /api/users for online user list
-- Simple shared-token auth for publish (--token flag)
-- CLI flags: --port (3001), --token, --expiry (30000ms)
+---
 
-### Local Daemon Changes
-- Publisher: POST snapshots to relay every poll cycle (if --share enabled)
-- Subscriber: GET combined data from relay
-- New CLI flags: --relay-url, --user-name, --user-color, --share, --include-users
-- New API endpoint: GET /api/combined (proxied from relay)
-- New API endpoint: GET /api/mode -> { mode: "local"|"multi", user, relay }
-- Browser checks /api/mode on startup, switches polling target
+## Tier 3.5: Process Management
 
-### Frontend: Multi-Person
-- Player colors: unit banners/flags in player color (tiny plane mesh)
-- Player roster panel: collapsible list of online users with session counts, filter by click
-- Building labels: per-user colored dots showing who has sessions there
-- Selection panel: shows user name + color for each unit
-- HUD: user count, blocked counter
-- Session IDs namespaced as {user}/{local_id} to avoid collisions
+### Kill / Restart Sessions from UI (#38)
+- Right-click or selection panel action to kill a Claude process directly from the Crystal Ball
+- Useful for cleaning up orphaned/zombie sessions the user didn't know about (discovered organically -- the UI revealed a 14-day orphaned process!)
+- Selection panel button: "Kill Session" with confirmation dialog
+- Backend: POST /api/sessions/:id/kill sends SIGTERM (then SIGKILL after timeout)
+- Safety: require double-confirm for active (non-stale) sessions
+- Stretch: "Kill All Stale" bulk action in War Room
+- **Effort:** Low-medium. **Impact:** High (operational utility beyond visualization).
+- **Files:** server/index.js (kill endpoint), public/js/selectionPanel.js (kill button), public/js/warroom.js (bulk action)
 
-### Group Merging
-- Groups merged by directory basename across users
-- Same basename = same building (even from different machines)
-- Known limitation: false merges for common names like "utils"
-
-### Multi-Person Simulation
-- When --simulate + --relay-url=simulated: generate 2-3 fake users
-- Each with 2-5 sessions, mix of Mode 1/Mode 2
-- Tests mixed multi-person visualization without real remote users
-
-### Files
-New project: crystal-ball-relay/ (server/index.js, store.js, merger.js, auth.js + tests)
-Local additions: server/relay/publisher.js, server/relay/subscriber.js, public/js/playerColors.js, public/js/roster.js
-Modifications: worldManager.js, units.js, stateVisuals.js, selectionPanel.js, hud.js, api.js
+### Focus Terminal from UI (#39)
+- Click a unit (or button in selection panel) to focus the actual terminal window running that session
+- TTY device already captured by macOS discovery (`session.tty`)
+- **macOS options:**
+  - **iTerm2 (best):** AppleScript API exposes `tty` per session -- iterate windows/tabs, match TTY, `activate`. Reliable, no fuzzy matching.
+  - **Terminal.app:** AppleScript can focus windows but doesn't expose TTY -- would need indirect matching via window title or process tree. Fragile.
+  - **VS Code:** No external API to focus a specific integrated terminal panel. Not feasible without an extension.
+  - All approaches require macOS Accessibility permissions (one-time user grant).
+- **Linux options:**
+  - `xdotool` can focus windows by PID on X11. Walk `/proc/PID/stat` -> session leader -> terminal emulator PID -> `xdotool windowactivate`.
+  - Wayland: no universal window-focus protocol yet; compositor-specific (sway IPC, KDE scripting). Harder.
+  - `wmctrl` is another X11 option for window activation by PID.
+- **Implementation sketch:** server-side `terminalMap` module polls AppleScript/xdotool every few seconds to build `tty -> windowId` cache. New POST `/api/sessions/:id/focus` endpoint triggers activation. Client adds button to selection panel.
+- **Effort:** Medium. **Impact:** High (bridges visualization back to real workflow).
+- **Files:** NEW server/discovery/terminalMap.js, server/index.js (endpoint), public/js/selectionPanel.js (focus button)
 
 ---
 

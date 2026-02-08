@@ -258,34 +258,30 @@ When a session has child processes, a small purple glowing sphere orbits the uni
 
 ## Animations
 
+### Terminology
+
+Three distinct layers drive unit visuals:
+
+1. **State** -- how awake is the session? (active, awaiting, idle, blocked, stale). Drives color, opacity, speed multiplier, and which animation variant plays.
+2. **Phase** -- what kind of work is Claude doing? (planning, researching, coding, testing, reviewing, idle). Mode 2 only, inferred by the hook from tool name.
+3. **Activity** -- the animation that plays on the unit. Named identically to the phase. State selects the variant: `active` state plays the energetic variant, all other states play the passive variant.
+
 ### Activity System (activities.js)
 
-Each group gets a deterministic activity pair (energetic for active state, passive for idle/awaiting). Mode 2 sessions use phase-driven mapping instead.
+6 activities, each named after its phase. Each has an energetic variant (for active state) and a passive variant (for idle/awaiting/blocked). Mode 1 sessions use a deterministic group-index mapping; Mode 2 sessions use phase-driven mapping.
 
-Group activity pairs (5):
-
-| # | Energetic (Active) | Passive (Idle/Awaiting) |
+| Activity | Energetic (active state) | Passive (idle/awaiting/blocked) |
 |---|---|---|
-| 0 | Building -- bob + fast rocking (hammering) | Scribing -- tiny bob + gentle sway |
-| 1 | Mining -- fast bob + vigorous rocking | Praying -- kneeling (scale.y=0.7) + sway |
-| 2 | Chopping -- slow bob + sharp rocking | Resting -- very slow gentle bob |
-| 3 | Smelting -- medium bob + rocking | Foraging -- slow circular patrol (r=0.6) |
-| 4 | Fishing -- 4-phase cast cycle (1s wind-up, snap forward, waiting lean) | Patrolling -- circular walk (r=1.5), faces movement direction |
+| **coding** | Asymmetric hammer strikes -- bob with fast-down/pause-at-bottom/slow-rise, reads as deliberate impacts | Gentle scribing -- tiny rapid bob + gentle sway (reviewing what was written) |
+| **researching** | Purposeful patrol -- circular path (r=1.5) with periodic direction reversals, faces movement | Walk-stop-examine -- small radius (r=0.6), pauses every ~2s with scale.y dip as if examining ground |
+| **planning** | Contemplative head-tilts -- periodic Z-rotation tilts with gentle sway, occasional brief freeze | Breathing stillness -- near-still with slow scale.y pulse (0.98-1.02) |
+| **testing** | Wide pickaxe swings -- sharp asymmetric down-rock (wider amplitude than coding) | Praying -- kneel (scale.y=0.7) + gentle sway + tiny X-axis tremor (nervous hands) |
+| **reviewing** | Fishing cast cycle -- 4-phase: wind-up (1s), cast forward snap, waiting lean, reset | Foraging with stops -- slow wander (r=0.6) with periodic pause-and-bend |
+| **idle** | Breathing pulse -- slow scale.y oscillation (0.98-1.02) + very gentle sway | Head-nod dozing -- periodic rotation.x dip every ~4s + near-stillness |
 
-Patrol and Foraging units control their own position (exempt from anchor lerp). Marching units also exempt from lerpToTarget (marchInManager controls position).
+Patrol, foraging, and walk-stop-examine activities control their own position (exempt from anchor lerp). Marching units also exempt from lerpToTarget.
 
-Phase activity map (Mode 2):
-
-| Phase | Energetic | Passive |
-|---|---|---|
-| planning | Scribing | Scribing |
-| researching | Patrolling | Patrolling |
-| coding | Building | Scribing |
-| testing | Mining | Praying |
-| debugging | Mining | Mining |
-| reviewing | Patrolling | Foraging |
-| documenting | Scribing | Scribing |
-| idle | Resting | Resting |
+Phase-to-activity mapping is 1:1 (each phase name = its activity name).
 
 ### State Visuals (stateVisuals.js)
 
@@ -293,9 +289,11 @@ Phase activity map (Mode 2):
 |---|---|---|---|---|---|
 | active | Normal class color | 100% | None | 1.0x | -- |
 | awaiting | Normal | 100% | Gold pulse (1Hz, 0.0-0.5 intensity) | 0.5x | Golden "!" CSS2D label (max 20 labels) |
-| blocked | Normal | 100% | Red pulse (3Hz) | 0.3x | Red "X" CSS2D label (max 20 labels) |
+| blocked | Normal | 85% | None | 0.4x | Blue-grey "⏸" CSS2D label (max 20 labels) |
 | idle | Desaturated grey | 80% | None | 0.5x | -- |
-| stale | Dark grey | 40% | None | 0x (frozen) | scale.y = 0.8 (slumped) |
+| stale | Dark red-grey (0x884444) | 50% | Red pulse (0xCC2222, 0.5Hz, 0.1-0.3 intensity) | 0x (frozen) | scale.y = 0.8 (slumped), red cross "✕" CSS2D label |
+
+Stale units (detached TTY, dormant processes) are flagged as candidates for investigation with a red glow and red cross -- visually alarming, distinct from the neutral blocked "⏸" icon.
 
 Note: applyStateVisuals runs BEFORE activity animations (order matters for speedMultiplier).
 
@@ -518,16 +516,16 @@ SimExLab, FPA-328, INCIDENT-18071, DOTFILES, Q1TouchPoint
 
 Bash script that runs after every tool use in a Claude Code session. Writes sidecar files to `$CRYSTAL_BALL_DIR` (default `~/.crystal-ball/sessions/`), named `<session_id>.json`.
 
-Phase inference from tool name:
+6 valid phases: `planning`, `researching`, `coding`, `testing`, `reviewing`, `idle`. Phase inference from tool name:
 
 | Tool | Inferred Phase |
 |---|---|
-| Read, Grep, Glob | researching |
-| Write, Edit | coding |
-| Bash with test commands | testing |
-| Bash with git diff/log | reviewing |
-| Task, Plan tools | planning |
-| Default | coding |
+| Read, Grep, Glob, WebSearch, WebFetch | researching |
+| Write, Edit, NotebookEdit | coding |
+| Bash with test/pytest/jest/vitest | testing |
+| Bash with git commands | reviewing |
+| Task*, EnterPlanMode, AskUserQuestion | planning |
+| Default Bash, unknown tools | coding |
 
 Detail extracted from tool_input (file_path, command, pattern). Atomic writes via tmp+mv. No LLM invocation -- pure bash/jq.
 

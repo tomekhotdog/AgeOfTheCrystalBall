@@ -2,19 +2,19 @@
 import * as THREE from 'three';
 
 const PALETTE = {
-  grass: 0xA8CC9A,
-  grassAlt: 0xB8DCA8,
-  water: 0x4AACE8,
-  path: 0xDED4BC,
-  dirt: 0xC0AA82,
-  hill: 0x96AA86,
-  sandstone: 0xE2CCA8,
-  stone: 0xB8B0A0,
-  wood: 0xA88A62,
-  roof: 0xCC7048,
-  roofAlt: 0x7A9E8E,
-  babyBlue: 0x89CFF0,
-  grYellow: 0xFFD700,
+  grass: 0xC4D8B8,
+  grassAlt: 0xD0E0C4,
+  water: 0x90C0D0,
+  path: 0xE8DCD0,
+  dirt: 0xD8C8B4,
+  hill: 0xB4C4A8,
+  sandstone: 0xF5E8D8,
+  stone: 0xDCD4CC,
+  wood: 0xD0B8A0,
+  roof: 0xD8A898,
+  roofAlt: 0xA8C8C0,
+  babyBlue: 0xA8D0E0,
+  grYellow: 0xE8D0A8,
 };
 
 export const BUILDING_TYPES = [
@@ -83,6 +83,27 @@ function m(geometry, color, opts = {}) {
   return mesh;
 }
 
+// Warm window colour and emissive for night glow
+const WIN_COLOR = 0xFFF0E0;
+const WIN_EMISSIVE = 0xF0C8A0;
+
+/** Non-shadow-casting warm PointLight for building night glow. Starts off. */
+function nightGlow(y = 0.8) {
+  const light = new THREE.PointLight(0xE8C4A0, 0, 3);
+  light.name = 'buildingGlow';
+  light.castShadow = false;
+  light.position.set(0, y, 0);
+  return light;
+}
+
+/** Warm emissive window mesh (driven by nightFactor). */
+function win(geom, x, y, z) {
+  const mesh = m(geom, WIN_COLOR, { emissive: WIN_EMISSIVE, emissiveIntensity: 0 });
+  mesh.name = 'windowGlow';
+  mesh.position.set(x, y, z);
+  return mesh;
+}
+
 // ---------------------------------------------------------------------------
 // 1. Forge / Soho Place -- squat sandstone building with chimney, GR banner
 // ---------------------------------------------------------------------------
@@ -109,15 +130,15 @@ function buildForge() {
   cap.position.set(0.5, 1.95, -0.3);
   g.add(cap);
 
-  // Inner glow (point light)
-  const glow = new THREE.PointLight(0xFF8844, 0.6, 3);
+  // Warm glow (base 0.3 from forge fire, boosted at night)
+  const glow = new THREE.PointLight(0xE8C4A0, 0.3, 3);
+  glow.name = 'buildingGlow';
+  glow.castShadow = false;
   glow.position.set(0, 0.5, 0.4);
   g.add(glow);
 
-  // Door cutout hint (dark rectangle)
-  const door = m(new THREE.BoxGeometry(0.35, 0.55, 0.05), 0x3A2A1A);
-  door.position.set(0, 0.35, 0.72);
-  g.add(door);
+  // Door with warm interior glow
+  g.add(win(new THREE.BoxGeometry(0.35, 0.55, 0.05), 0, 0.35, 0.72));
 
   // GR banner on front face (baby blue + yellow stripe)
   const bannerBg = m(new THREE.BoxGeometry(0.25, 0.35, 0.02), PALETTE.babyBlue);
@@ -147,18 +168,17 @@ function buildLibrary() {
   dome.position.set(0, 1.8, 0);
   g.add(dome);
 
-  // Window cutout hints
+  // Night glow
+  g.add(nightGlow(1.0));
+
+  // Front windows (warm emissive for night glow)
   for (let i = -1; i <= 1; i += 2) {
-    const win = m(new THREE.BoxGeometry(0.15, 0.25, 0.05), 0xEEDDCC);
-    win.position.set(i * 0.3, 1.1, 0.62);
-    g.add(win);
+    g.add(win(new THREE.BoxGeometry(0.15, 0.25, 0.05), i * 0.3, 1.1, 0.62));
   }
 
   // Side windows
   for (let i = -1; i <= 1; i += 2) {
-    const win = m(new THREE.BoxGeometry(0.05, 0.25, 0.15), 0xEEDDCC);
-    win.position.set(0.62, 1.1, i * 0.3);
-    g.add(win);
+    g.add(win(new THREE.BoxGeometry(0.05, 0.25, 0.15), 0.62, 1.1, i * 0.3));
   }
 
   // Antenna on the roof
@@ -180,7 +200,7 @@ function buildChapel() {
   const g = new THREE.Group();
 
   // Base -- coastal stone tint (slightly bluer)
-  const coastalStone = 0xC0BDB8;
+  const coastalStone = 0xDCD8D4;
   const body = m(new THREE.BoxGeometry(1.4, 1.2, 1.6), coastalStone);
   body.position.set(0, 0.6, 0);
   g.add(body);
@@ -205,10 +225,16 @@ function buildChapel() {
   spire.position.set(0, 2.25, -0.4);
   g.add(spire);
 
+  // Night glow
+  g.add(nightGlow(0.8));
+
   // Door
   const door = m(new THREE.BoxGeometry(0.3, 0.5, 0.05), 0x3A2A1A);
   door.position.set(0, 0.3, 0.82);
   g.add(door);
+
+  // Window above door
+  g.add(win(new THREE.BoxGeometry(0.2, 0.2, 0.05), 0, 0.85, 0.82));
 
   return g;
 }
@@ -230,7 +256,7 @@ function buildObservatory() {
   g.add(dome);
 
   // Dome slit
-  const slit = m(new THREE.BoxGeometry(0.08, 0.02, 0.9), 0x2A3A4A);
+  const slit = m(new THREE.BoxGeometry(0.08, 0.02, 0.9), 0x4A5060);
   slit.position.set(0, 1.8, 0);
   g.add(slit);
 
@@ -241,9 +267,15 @@ function buildObservatory() {
   g.add(telescope);
 
   // Telescope lens
-  const lens = m(new THREE.CylinderGeometry(0.08, 0.08, 0.04, 8), 0x5588AA);
+  const lens = m(new THREE.CylinderGeometry(0.08, 0.08, 0.04, 8), 0x88AAB8);
   lens.position.set(0.65, 2.25, 0);
   g.add(lens);
+
+  // Night glow
+  g.add(nightGlow(1.0));
+
+  // Window on base
+  g.add(win(new THREE.BoxGeometry(0.12, 0.2, 0.05), 0, 0.8, 0.92));
 
   return g;
 }
@@ -282,7 +314,7 @@ function buildWorkshop() {
   g.add(bench2);
 
   // Server rack shapes on workbenches (tall thin boxes)
-  const rackColor = 0x2A2A2A;
+  const rackColor = 0x484848;
   const rack1 = m(new THREE.BoxGeometry(0.06, 0.2, 0.08), rackColor);
   rack1.position.set(-0.35, 0.40, -0.2);
   g.add(rack1);
@@ -296,13 +328,19 @@ function buildWorkshop() {
   g.add(rack3);
 
   // LED indicator lights on racks
-  const led1 = m(new THREE.BoxGeometry(0.015, 0.015, 0.01), 0x44FF44);
+  const led1 = m(new THREE.BoxGeometry(0.015, 0.015, 0.01), 0xA0D8A8);
   led1.position.set(-0.35, 0.48, -0.16);
   g.add(led1);
 
   const led2 = m(new THREE.BoxGeometry(0.015, 0.015, 0.01), PALETTE.babyBlue);
   led2.position.set(-0.22, 0.46, -0.16);
   g.add(led2);
+
+  // Night glow
+  g.add(nightGlow(1.2));
+
+  // Warm hanging bulb under roof
+  g.add(win(new THREE.SphereGeometry(0.05, 6, 6), 0, 1.3, 0));
 
   return g;
 }
@@ -338,6 +376,13 @@ function buildMarket() {
   canopy2.position.set(0, 1.02, 0.6);
   canopy2.rotation.z = -0.06;
   g.add(canopy2);
+
+  // Night glow
+  g.add(nightGlow(0.9));
+
+  // Warm lamps under canopies
+  g.add(win(new THREE.SphereGeometry(0.04, 6, 6), -0.3, 1.1, -0.2));
+  g.add(win(new THREE.SphereGeometry(0.04, 6, 6),  0.3, 0.9, 0.6));
 
   // Coffee cup shapes on the stalls (warm palette)
   const cupColor = 0xF5F5F0;
@@ -379,7 +424,7 @@ function buildFarm() {
   g.add(wallE);
 
   // Compute pods (baby-blue boxes replacing green crops)
-  const podColors = [0x89CFF0, 0x7BC0E8, 0x9AD4F5];
+  const podColors = [0xA8D0E0, 0x9CC8D8, 0xB4D8E8];
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 4; col++) {
       const ci = (row + col) % podColors.length;
@@ -387,11 +432,17 @@ function buildFarm() {
       pod.position.set(-0.55 + col * 0.38, 0.075, -0.45 + row * 0.45);
       g.add(pod);
       // Small LED indicator on each pod
-      const led = m(new THREE.BoxGeometry(0.02, 0.02, 0.01), 0x44FF44);
+      const led = m(new THREE.BoxGeometry(0.02, 0.02, 0.01), 0xA0D8A8);
       led.position.set(-0.55 + col * 0.38 + 0.1, 0.16, -0.45 + row * 0.45 + 0.1);
       g.add(led);
     }
   }
+
+  // Night glow
+  g.add(nightGlow(0.5));
+
+  // Gate lamp
+  g.add(win(new THREE.SphereGeometry(0.04, 6, 6), 0, 0.45, 0.9));
 
   // Gate opening post markers
   const postL = m(new THREE.CylinderGeometry(0.04, 0.04, 0.4, 6), PALETTE.wood);
@@ -441,6 +492,12 @@ function buildLumberCamp() {
   roof.position.set(0, 1.1, 0);
   roof.rotation.x = 0.2;
   g.add(roof);
+
+  // Night glow
+  g.add(nightGlow(0.9));
+
+  // Warm shelter light
+  g.add(win(new THREE.SphereGeometry(0.05, 6, 6), 0, 0.9, 0));
 
   // Stacked logs
   for (let row = 0; row < 2; row++) {

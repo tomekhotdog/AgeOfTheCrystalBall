@@ -30,7 +30,7 @@ export class LoadingScreen {
       position: 'fixed',
       inset: '0',
       zIndex: '9999',
-      background: '#1a1a2e',
+      background: '#1A1828',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -46,7 +46,7 @@ export class LoadingScreen {
     Object.assign(title.style, {
       fontFamily: "'Cinzel', serif",
       fontSize: '32px',
-      color: '#e8c84a',
+      color: '#D8B8A8',
       letterSpacing: '3px',
       marginBottom: '32px',
       textAlign: 'center',
@@ -60,7 +60,7 @@ export class LoadingScreen {
       width: '80px',
       height: '80px',
       borderRadius: '50%',
-      background: 'radial-gradient(circle at center, #89CFF0 0%, transparent 70%)',
+      background: 'radial-gradient(circle at center, #A8D0E0 0%, transparent 70%)',
       animation: 'crystalPulse 2.4s ease-in-out infinite',
       marginBottom: '28px',
     });
@@ -83,7 +83,7 @@ export class LoadingScreen {
     Object.assign(track.style, {
       width: '200px',
       height: '4px',
-      background: '#2a2a3e',
+      background: '#2A2838',
       borderRadius: '2px',
       overflow: 'hidden',
     });
@@ -92,7 +92,7 @@ export class LoadingScreen {
     Object.assign(fill.style, {
       width: '0%',
       height: '100%',
-      background: '#e8c84a',
+      background: '#D8B8A8',
       borderRadius: '2px',
       transition: 'width 200ms ease',
     });

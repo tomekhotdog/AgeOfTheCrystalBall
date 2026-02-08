@@ -72,6 +72,93 @@ export function animScribe(mesh, time) {
 }
 
 /**
+ * Asymmetric hammer strike: fast down, brief pause at bottom, slow rise.
+ * Amplitude 0.05, period ~1.2s.
+ */
+export function animStrike(mesh, time) {
+  const baseY = mesh.userData.baseY ?? 0;
+  // Shape: fast down via abs(sin), asymmetry from power curve
+  const cycle = (time * 1.2) % 1.0;
+  const down = Math.abs(Math.sin(cycle * Math.PI));
+  const shaped = Math.pow(down, 0.6); // fast down, slow rise
+  mesh.position.y = baseY + (1 - shaped) * 0.05;
+}
+
+/**
+ * Periodic Z-rotation tilt (0.12 rad) with brief freeze every ~3s.
+ */
+export function animHeadTilt(mesh, time) {
+  const period = 3.0;
+  const cycle = time % period;
+  // Tilt for 2s, freeze for 1s
+  if (cycle < 2.0) {
+    mesh.rotation.z = Math.sin((cycle / 2.0) * Math.PI * 2) * 0.12;
+  } else {
+    mesh.rotation.z = 0;
+  }
+}
+
+/**
+ * Breathing pulse: scale.y oscillates 0.98-1.02, period ~3s.
+ */
+export function animBreathingPulse(mesh, time) {
+  mesh.scale.y = 1.0 + Math.sin(time * (Math.PI * 2 / 3.0)) * 0.02;
+}
+
+/**
+ * Walk-stop-examine: patrol with periodic 2s pauses.
+ * During pause, scale.y dips to 0.9 briefly (examining).
+ * @param {THREE.Mesh|THREE.Group} mesh
+ * @param {number} time
+ * @param {number} [radius=0.6]
+ */
+export function animWalkStopExamine(mesh, time, radius = 0.6) {
+  const baseX = mesh.userData.baseX ?? 0;
+  const baseZ = mesh.userData.baseZ ?? 0;
+  const cyclePeriod = 6.0; // 4s walk + 2s stop
+  const cycle = time % cyclePeriod;
+
+  if (cycle < 4.0) {
+    // Walking phase
+    const speed = 0.4;
+    const angle = time * speed;
+    mesh.position.x = baseX + Math.cos(angle) * radius;
+    mesh.position.z = baseZ + Math.sin(angle) * radius;
+    mesh.rotation.y = -angle + Math.PI / 2;
+    mesh.scale.y = 1.0;
+  } else {
+    // Stop and examine phase
+    const examineProgress = (cycle - 4.0) / 2.0; // 0..1
+    const dip = Math.sin(examineProgress * Math.PI);
+    mesh.scale.y = 1.0 - dip * 0.1; // dip to 0.9 at peak
+  }
+}
+
+/**
+ * Periodic head nod: rotation.x dip (0.15 rad) every ~4s, quick down + slow return.
+ */
+export function animHeadNod(mesh, time) {
+  const period = 4.0;
+  const cycle = time % period;
+  if (cycle < 0.8) {
+    // Quick nod down + slow return
+    const t = cycle / 0.8;
+    const curve = t < 0.3 ? (t / 0.3) : 1.0 - ((t - 0.3) / 0.7);
+    mesh.rotation.x = curve * 0.15;
+  } else {
+    mesh.rotation.x = 0;
+  }
+}
+
+/**
+ * Tiny rapid X-axis vibration. Amplitude 0.005, high frequency.
+ * Layered on top of other animations.
+ */
+export function animTremor(mesh, time) {
+  mesh.position.x += Math.sin(time * 30) * 0.005;
+}
+
+/**
  * Smooth position lerp toward a target { x, y, z }.
  * @param {THREE.Object3D} mesh
  * @param {{ x: number, y: number, z: number }} target
