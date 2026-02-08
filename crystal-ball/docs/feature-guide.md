@@ -8,7 +8,7 @@
 
 - Isometric AoE2/Monument Valley-style Three.js visualization of Claude Code sessions
 - Express server discovers Claude processes, classifies state, serves REST API
-- Browser polls API every 2s, renders an isometric town where each session is a villager-unit
+- Browser polls API every 2s, renders an isometric village where each session is a villager
 - 30 client modules, 7 server modules, 483 tests (421 client + 62 server)
 - ESM throughout, no bundler, Three.js r160 via CDN importmap
 
@@ -187,17 +187,17 @@ Shadow maps: 2048x2048 PCFSoftShadowMap.
 
 ---
 
-## Units
+## Villagers
 
 ### Construction (units.js)
 
 - Body: CylinderGeometry, head: SphereGeometry
 - Named mesh children: `body`, `head`, `awaitLabel`, `childCompanion`
-- userData for raycasting: `{ type: 'unit', sessionId }`
+- userData for raycasting: `{ type: 'unit', sessionId }` (internal type key kept as `unit` for code compatibility)
 - Geometry/material caches for performance (`_geomCache`, `_accessoryMatCache`)
 - `removeUnit` skips disposing shared cached resources
 
-### 7 Unit Classes (priority order)
+### 7 Villager Roles (priority order)
 
 | Class | Condition | Color | Visual Accessory |
 |---|---|---|---|
@@ -247,7 +247,7 @@ Smoothly lerped. Runs before stateVisuals so stale y-squash (scale.y = 0.8) laye
 
 ### Child-Process Companion Orb
 
-When a session has child processes, a small purple glowing sphere orbits the unit:
+When a session has child processes, a small purple glowing sphere orbits the villager:
 
 - Orbit radius 0.3, speed 2 rad/s
 - Gentle sine-wave vertical float
@@ -260,11 +260,11 @@ When a session has child processes, a small purple glowing sphere orbits the uni
 
 ### Terminology
 
-Three distinct layers drive unit visuals:
+Three distinct layers drive villager visuals:
 
 1. **State** -- how awake is the session? (active, awaiting, idle, blocked, stale). Drives color, opacity, speed multiplier, and which animation variant plays.
 2. **Phase** -- what kind of work is Claude doing? (planning, researching, coding, testing, reviewing, idle). Mode 2 only, inferred by the hook from tool name.
-3. **Activity** -- the animation that plays on the unit. Named identically to the phase. State selects the variant: `active` state plays the energetic variant, all other states play the passive variant.
+3. **Activity** -- the animation that plays on the villager. Named identically to the phase. State selects the variant: `active` state plays the energetic variant, all other states play the passive variant.
 
 ### Activity System (activities.js)
 
@@ -279,7 +279,7 @@ Three distinct layers drive unit visuals:
 | **reviewing** | Fishing cast cycle -- 4-phase: wind-up (1s), cast forward snap, waiting lean, reset | Foraging with stops -- slow wander (r=0.6) with periodic pause-and-bend |
 | **idle** | Breathing pulse -- slow scale.y oscillation (0.98-1.02) + very gentle sway | Head-nod dozing -- periodic rotation.x dip every ~4s + near-stillness |
 
-Patrol, foraging, and walk-stop-examine activities control their own position (exempt from anchor lerp). Marching units also exempt from lerpToTarget.
+Patrol, foraging, and walk-stop-examine activities control their own position (exempt from anchor lerp). Marching villagers also exempt from lerpToTarget.
 
 Phase-to-activity mapping is 1:1 (each phase name = its activity name).
 
@@ -293,7 +293,7 @@ Phase-to-activity mapping is 1:1 (each phase name = its activity name).
 | idle | Desaturated grey | 80% | None | 0.5x | -- |
 | stale | Dark red-grey (0x884444) | 50% | Red pulse (0xCC2222, 0.5Hz, 0.1-0.3 intensity) | 0x (frozen) | scale.y = 0.8 (slumped), red cross "✕" CSS2D label |
 
-Stale units (detached TTY, dormant processes) are flagged as candidates for investigation with a red glow and red cross -- visually alarming, distinct from the neutral blocked "⏸" icon.
+Stale villagers (detached TTY, dormant processes) are flagged as candidates for investigation with a red glow and red cross -- visually alarming, distinct from the neutral blocked "⏸" icon.
 
 Note: applyStateVisuals runs BEFORE activity animations (order matters for speedMultiplier).
 
@@ -312,14 +312,14 @@ Note: applyStateVisuals runs BEFORE activity animations (order matters for speed
 
 ### March-In (marchIn.js)
 
-New units spawn at nearest map edge, march to anchor over 2s with easeOutQuad. Dust burst at spawn point.
+New villagers spawn at nearest village edge, march to anchor over 2s with easeOutQuad. Dust burst at spawn point.
 
 ### Gravestones (marchIn.js)
 
-When a session dies:
+When a session ends:
 
 - Grey gravestone with cross appears at last position
-- Death motes (gold particles) scatter upward simultaneously
+- Gold motes scatter upward simultaneously
 - Fully visible for 6s, then fades linearly over 54s
 - Removed and disposed after 60s total
 
@@ -340,13 +340,13 @@ Triggered when all sessions are simultaneously active:
 
 | Action | Effect |
 |---|---|
-| Click unit | Select it, show detail panel |
-| Click building | Select all units in that group |
+| Click villager | Select it, show detail panel |
+| Click building | Select all villagers in that neighborhood |
 | Click empty ground | Deselect all |
-| Shift-click | Toggle individual unit in/out of selection |
-| Box-select (drag >5px) | Green translucent rectangle, selects all units within |
+| Shift-click | Toggle individual villager in/out of selection |
+| Box-select (drag >5px) | Green translucent rectangle, selects all villagers within |
 
-Selected units get green emissive glow (0x44ff44).
+Selected villagers get green emissive glow (0x44ff44).
 
 ### Double-Click (doubleClick.js)
 
@@ -354,8 +354,8 @@ Selected units get green emissive glow (0x44ff44).
 
 | Action | Effect |
 |---|---|
-| Double-click unit | Select all units of same class across map |
-| Double-click building | Select all units in that group |
+| Double-click villager | Select all villagers of same role across village |
+| Double-click building | Select all villagers in that neighborhood |
 
 ### Keyboard Hotkeys (hotkeys.js)
 
@@ -363,13 +363,13 @@ All shortcuts suppressed when focus is in an input, textarea, or select element.
 
 | Key | Action |
 |---|---|
-| Space | Jump to longest-awaiting unit |
-| A | Select all awaiting units |
-| 1-5 | Jump to platoon building N |
+| Space | Jump to longest-awaiting villager |
+| A | Select all awaiting villagers |
+| 1-5 | Jump to neighborhood building N |
 | F | Focus camera on selection |
 | Q | Rotate camera 90 degrees counter-clockwise |
 | E | Rotate camera 90 degrees clockwise |
-| Tab | Toggle War Room |
+| Tab | Toggle Trading Floor |
 | M | Toggle minimap |
 | H | Toggle heatmap |
 | Esc | Deselect all, close panels |
@@ -379,7 +379,7 @@ All shortcuts suppressed when focus is in an input, textarea, or select element.
 ### Camera (scene.js, cameraRotation.js)
 
 - Orthographic at true isometric angle (10, 10, 10)
-- Scroll zoom: viewSize 6 (tactical) to 30 (strategic), zoom-to-cursor, smooth lerp
+- Scroll zoom: viewSize 6 (close-up) to 30 (bird's-eye), zoom-to-cursor, smooth lerp
 - Drag panning: isometric-aware projection math
 - Arrow key panning
 - 90-degree snap rotation (Q/E): smooth exponential lerp between NE/SE/SW/NW (~500ms)
@@ -391,17 +391,17 @@ All shortcuts suppressed when focus is in an input, textarea, or select element.
 
 - Biome-accurate terrain colors
 - White 4x4 squares for buildings
-- 2x2 colored dots for units (state-colored)
+- 2x2 colored dots for villagers (state-colored)
 - White viewport rectangle showing camera frustum
 - Click to teleport camera
 
 ### Tooltips (tooltips.js)
 
-Hover over a unit for 300ms to see a parchment-styled card:
+Hover over a villager for 300ms to see a parchment-styled card:
 
-- Medieval name + class (e.g., "Aldric the Engineer")
+- Medieval name + role (e.g., "Aldric the Engineer")
 - Rank badge (star) + title
-- State (color-coded), CPU%, Memory, Uptime, Platoon
+- State (color-coded), CPU%, Memory, Uptime, Neighborhood
 - Auto-flips to avoid viewport overflow
 
 ### Heatmap Mode (heatmap.js, H key)
@@ -428,7 +428,7 @@ Top bar showing:
 - Session counts by state: active / awaiting / blocked / idle / stale
 - Total CPU and memory
 - Await-min -- cumulative agent-minutes spent awaiting/blocked across all sessions
-- Longest -- name, group, and duration of the longest-waiting unit
+- Longest -- name, group, and duration of the longest-waiting villager
 - Awaiting count pulses gold when any sessions are awaiting
 - Blocked count pulses red
 
@@ -438,18 +438,18 @@ Bottom-center overlay, three view modes:
 
 | View | Contents |
 |---|---|
-| Unit view | Name, class, rank, state, PID, CPU bar, memory, uptime, terminal, children count. Mode 2: task, phase badge (colored), detail, blocked indicator. |
-| Group view | Building name, unit count, state distribution, per-unit list. Mode 2: blocked count. |
-| Multi-unit view | Count, state distribution summary. |
+| Villager view | Name, role, rank, state, PID, CPU bar, memory, uptime, terminal, children count. Mode 2: task, phase badge (colored), detail, blocked indicator. |
+| Neighborhood view | Building name, villager count, state distribution, per-villager list. Mode 2: blocked count. |
+| Multi-villager view | Count, state distribution summary. |
 
-### War Room (warroom.js, Tab key)
+### Trading Floor (warroom.js, Tab key)
 
 350px slide-in panel with 4 sections:
 
 | Section | Contents |
 |---|---|
-| Army Overview | Total sessions, CPU, memory, colored state bar (including blocked segment) |
-| Platoon Leaderboard | Groups ranked by activity score: active=3, awaiting=1, blocked=0, idle=0, stale=-1 |
+| Village Overview | Total sessions, CPU, memory, colored state bar (including blocked segment) |
+| Neighborhood Leaderboard | Groups ranked by activity score: active=3, awaiting=1, blocked=0, idle=0, stale=-1 |
 | Activity Feed | Live log of state transitions (max 20 entries), timestamped, color-coded |
 | Mode 2 Intel | Mode 1 vs Mode 2 counts, phase distribution, blocked sessions list |
 
@@ -493,11 +493,11 @@ SimExLab, FPA-328, INCIDENT-18071, DOTFILES, Q1TouchPoint
 
 ### Language Mapping
 
-| Medieval Term | GR Term |
+| Village Term | GR Term |
 |---|---|
-| War Room | Trading Floor |
-| Army | Portfolio |
-| Platoon | Desk |
+| Trading Floor | Trading Floor |
+| Village | Portfolio |
+| Neighborhood | Desk |
 | Activity Feed | Trade Log |
 | FULL DEPLOYMENT | MARKET OPEN |
 | Scrying | Warming up the models |

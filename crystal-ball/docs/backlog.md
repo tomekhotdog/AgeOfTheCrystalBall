@@ -27,21 +27,21 @@ Everything remaining. Consolidated from the V1 design doc, V1 addendum, and futu
 - **Effort:** High (requires audio asset sourcing). **Impact:** High.
 - **Files:** NEW public/js/sound.js, public/audio/*.mp3
 
-### Division Auto-Inference (#26)
-- Group platoons by nearest common ancestor directory
-- Example: /home/tomek/projects/SimExLab + /home/tomek/projects/FPA-328 -> Division "projects"
-- Divisions affect map placement (same-division platoons cluster in same biome zone)
-- Taller division banner marks each zone
+### District Auto-Inference (#26)
+- Group neighborhoods by nearest common ancestor directory
+- Example: /home/tomek/projects/SimExLab + /home/tomek/projects/FPA-328 -> District "projects"
+- Districts affect map placement (same-district neighborhoods cluster in same biome zone)
+- Taller district banner marks each zone
 - API gains divisions array: [{ id, commonPath, groupIds }]
 - **Effort:** Medium. **Impact:** Medium.
 - **Files:** server/sessionStore.js (grouping logic), server/index.js (API response)
 
 ### Dynamic Formations (#27)
-- Unit arrangement around buildings responds to platoon state composition:
-  - Battle formation (majority active): tight rows, facing outward
+- Villager arrangement around buildings responds to neighborhood state composition:
+  - Busy formation (majority active): tight rows, facing outward
   - Rest formation (majority idle/awaiting): loose scatter, wider radius
   - Camp formation (majority stale): cluster around auto-spawned campfire
-- Formation transitions: units lerp to new anchors over 2s
+- Formation transitions: villagers lerp to new anchors over 2s
 - **Effort:** Medium. **Impact:** Medium.
 - **Files:** public/js/worldManager.js (anchor generation strategies)
 
@@ -57,7 +57,7 @@ Everything remaining. Consolidated from the V1 design doc, V1 addendum, and futu
 ## Tier 2: Stretch Goals (from V1 design)
 
 ### Path A* (#33)
-- Units path-find around buildings and water instead of lerping directly to anchors
+- Villagers path-find around buildings and water instead of lerping directly to anchors
 - Requires navigation grid on tile system, A* algorithm, path-following animation
 - **Effort:** High. **Impact:** Medium.
 
@@ -73,7 +73,7 @@ Everything remaining. Consolidated from the V1 design doc, V1 addendum, and futu
 - **Effort:** Medium. **Impact:** Low.
 
 ### Class Transition Particle Puff (#36)
-- Small particle burst when unit changes class (e.g. Intern->Researcher at 2min)
+- Small particle burst when villager changes role (e.g. Intern->Researcher at 2min)
 - Classification change already detected in update loop, just needs particle spawn
 - **Effort:** Low. **Impact:** Low.
 
@@ -101,7 +101,7 @@ Implemented. Relay server at `crystal-ball-relay/`, local daemon relay modules a
 - Selection panel button: "Kill Session" with confirmation dialog
 - Backend: POST /api/sessions/:id/kill sends SIGTERM (then SIGKILL after timeout)
 - Safety: require double-confirm for active (non-stale) sessions
-- Stretch: "Kill All Stale" bulk action in War Room
+- Stretch: "Kill All Stale" bulk action in Trading Floor
 - **Effort:** Low-medium. **Impact:** High (operational utility beyond visualization).
 - **Files:** server/index.js (kill endpoint), public/js/selectionPanel.js (kill button), public/js/warroom.js (bulk action)
 
@@ -142,7 +142,7 @@ Implemented. Relay server at `crystal-ball-relay/`, local daemon relay modules a
 - Only worth it on dedicated GPUs
 - **Effort:** Low. **Impact:** Low.
 
-### Sparkline in War Room
-- CPU sparkline charts per platoon in the War Room panel
+### Sparkline in Trading Floor
+- CPU sparkline charts per neighborhood in the Trading Floor panel
 - Client-side rolling history buffer
 - **Effort:** Medium.

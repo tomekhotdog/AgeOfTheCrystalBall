@@ -1,12 +1,12 @@
 # Age of the Crystal Ball
 
-**A real-time strategic operations dashboard for AI-assisted software engineering, disguised as a medieval RTS.**
+**A real-time observability dashboard for AI-assisted software engineering, disguised as a medieval village sim.**
 
 ![Age of the Crystal Ball](screenshot.png)
 
-Every Claude Code session on your machine is a unit in your army. They gather into platoons around shared projects, march between buildings named after real office locations, and glow, pulse, and animate based on what they're actually doing. One glance at the isometric battlefield tells you everything: which projects are under heavy development, which agents need your input, how long they've been waiting, and where your compute is burning.
+Every Claude Code session on your machine is a villager in your village. They gather in neighborhoods around shared projects, march between buildings named after real office locations, and glow, pulse, and animate based on what they're actually doing. One glance at the isometric village tells you everything: which projects are under heavy development, which agents need your input, how long they've been waiting, and where your compute is burning.
 
-Age of the Crystal Ball is a crystal ball -- you observe your fleet of AI coding agents, you don't control them. The aesthetic is **Age of Empires II** meets **Monument Valley** meets **Townscaper**: orthographic 3D, warm sandstone and sage, geometric architecture, clean shadows, procedural terrain with biomes and rivers. Day fades to night and back again. Particles drift. Water shimmers. Units bob and work and glow.
+Age of the Crystal Ball is a crystal ball -- you observe your village of AI coding agents, you don't control them. The aesthetic is **Age of Empires II** meets **Monument Valley** meets **Townscaper**: orthographic 3D, warm sandstone and sage, geometric architecture, clean shadows, procedural terrain with biomes and rivers. Day fades to night and back again. Particles drift. Water shimmers. Villagers bob and work and glow.
 
 ---
 
@@ -18,12 +18,12 @@ Age of the Crystal Ball is a crystal ball -- you observe your fleet of AI coding
 - **Day/night cycle** -- 5-minute full cycle with dawn, day, dusk, and night phases; physically moving sun, dynamic bloom, and emissive glow that ramps up after dark
 - **Post-processing** -- Unreal bloom, vignette shader, 2048x2048 soft shadow maps
 
-### Intelligent Unit System
-- **7 unit classes** with unique visual accessories -- Researchers carry floating books, Engineers wield hammers, Analysts bear golden shields, Principals wear purple capes, Interns carry lanterns, Security units fade to ghostly transparency, and Baristas get one of 5 random props
+### Villager System
+- **7 villager roles** with unique visual accessories -- Researchers carry floating books, Engineers wield hammers, Analysts bear golden shields, Principals wear purple capes, Interns carry lanterns, Security villagers fade to ghostly transparency, and Baristas get one of 5 random props
 - **6 activity animations** -- each with energetic and passive variants tied to session state (coding, researching, planning, testing, reviewing, idle)
-- **State-driven visuals** -- active units glow, awaiting units pulse gold with floating "!" markers, blocked units dim with "pause" icons, stale units slump and glow red
-- **Memory scaling** -- units physically grow with RSS consumption
-- **March-in/gravestone lifecycle** -- new sessions march from the map edge; dead sessions leave behind gravestones that fade over 60 seconds
+- **State-driven visuals** -- active villagers glow, awaiting villagers pulse gold with floating "!" markers, blocked villagers dim with "pause" icons, stale villagers slump and glow red
+- **Memory scaling** -- villagers physically grow with RSS consumption
+- **March-in/gravestone lifecycle** -- new sessions march from the village edge; dead sessions leave behind gravestones that fade over 60 seconds
 - **Persistent medieval names** -- 46-name pool, deterministic from PID (Aldric, Bronwyn, Cedric, Freya...)
 
 ### Two Context Modes
@@ -31,16 +31,16 @@ Age of the Crystal Ball is a crystal ball -- you observe your fleet of AI coding
 - **Mode 2 (Active Context)** -- A PostToolUse hook writes sidecar JSON files with task, phase, blocked state, and detail. The server merges sidecar context with OS signals for rich per-session intelligence: what Claude is working on, what phase it's in, and whether it's blocked.
 
 ### Full Interaction
-- Click, shift-click, box-select, and double-click to select units and buildings
-- Keyboard hotkeys: **Space** (jump to longest-waiting unit), **A** (select all awaiting), **1-5** (jump to platoon), **Q/E** (rotate camera), **Tab** (Trading Floor panel), **H** (heatmap), **M** (minimap)
-- Scroll zoom from tactical to strategic view, drag panning, smooth camera rotation
-- Hover tooltips with name, class, rank, state, CPU, memory, uptime
+- Click, shift-click, box-select, and double-click to select villagers and buildings
+- Keyboard hotkeys: **Space** (jump to longest-waiting villager), **A** (select all awaiting), **1-5** (jump to building), **Q/E** (rotate camera), **Tab** (Trading Floor panel), **H** (heatmap), **M** (minimap)
+- Scroll zoom from close-up to bird's-eye view, drag panning, smooth camera rotation
+- Hover tooltips with name, role, rank, state, CPU, memory, uptime
 
 ### Observability Panels
-- **HUD** -- live session counts by state, total CPU/memory, cumulative agent-minutes wasted, longest-waiting unit
-- **Trading Floor (War Room)** -- portfolio overview, platoon leaderboard, live activity feed, Mode 2 intel with phase distribution
-- **Selection Panel** -- detailed unit/group/multi-selection views with CPU bars, state badges, and Mode 2 context
-- **Minimap** -- 150x150 canvas with biome-accurate terrain, building markers, unit dots, and click-to-teleport
+- **HUD** -- live session counts by state, total CPU/memory, cumulative agent-minutes wasted, longest-waiting villager
+- **Trading Floor** -- village overview, neighborhood leaderboard, live activity feed, Mode 2 intel with phase distribution
+- **Selection Panel** -- detailed villager/group/multi-selection views with CPU bars, state badges, and Mode 2 context
+- **Minimap** -- 150x150 canvas with biome-accurate terrain, building markers, villager dots, and click-to-teleport
 - **Heatmap** -- terrain tiles recolor by CPU activity (cold blue to hot red)
 
 ### Multi-Person Mode
@@ -70,11 +70,22 @@ npm start
 open http://localhost:3000
 ```
 
-### Multi-Person Demo
+### Demo Modes
 
 ```bash
-# One command launches relay + two simulated users
-npm run demo
+cd crystal-ball
+
+# Single-user simulated village (no relay needed)
+./demo.sh local
+
+# Multi-user: relay + local (simulated) + 1 bot
+./demo.sh multi
+
+# Multi-user: relay + real process discovery + 2 simulated bots, permanent daytime
+./demo.sh live 2 --day
+
+# See all options
+./demo.sh --help
 ```
 
 ### Hook Installation (Mode 2)
