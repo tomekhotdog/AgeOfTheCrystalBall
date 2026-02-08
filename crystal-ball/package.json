@@ -7,7 +7,13 @@
     "simulate": "SIMULATE=true node server/index.js",
     "test": "npm run test:client && npm run test:server",
     "test:client": "node --loader ./tests/client/three-mock-loader.js --test tests/client/*.test.js",
-    "test:server": "node --test tests/server/*.test.js"
+    "test:server": "node --test tests/server/*.test.js",
+    "relay": "node ../crystal-ball-relay/server/index.js",
+    "share": "node server/index.js --relay-url http://localhost:3001",
+    "demo:relay": "node ../crystal-ball-relay/server/index.js --token demo",
+    "demo:local": "node server/index.js --relay-url http://localhost:3001 --token demo",
+    "demo:bot": "SIMULATE=true node server/index.js --port 3002 --relay-url http://localhost:3001 --token demo --user-name Bob --user-color #FF6B6B",
+    "demo": "bash demo.sh"
   },
   "dependencies": {
     "express": "^4.18.0"
