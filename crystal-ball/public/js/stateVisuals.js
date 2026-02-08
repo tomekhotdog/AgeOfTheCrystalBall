@@ -3,19 +3,30 @@ import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
 const PALETTE = {
-  unitBody: 0xDCC8B0,
+  unitBody: 0xDCC0A0,
   unitActive: 0xA8D0B0,
-  unitAwait: 0xE8D0A8,
-  unitIdle: 0xC4BCC0,
-  unitStale: 0xB09090,
-  unitBlocked: 0xA0AAB8,
-  crystalGlow: 0xC0A8D8,
+  unitAwait: 0xF0C880,
+  unitIdle: 0xC0B4B8,
+  unitStale: 0xB08080,
+  unitBlocked: 0x98A4B8,
+  crystalGlow: 0xB898E0,
 };
 
 const _colorCache = {};
 function getColor(hex) {
   if (!_colorCache[hex]) _colorCache[hex] = new THREE.Color(hex);
   return _colorCache[hex];
+}
+
+const _tintColor = new THREE.Color();
+const PLAYER_TINT = 0.40;
+const PLAYER_TINT_WEAK = 0.20;
+
+function applyPlayerTint(mat, unitGroup, ratio) {
+  const ownerColor = unitGroup.userData.ownerColor;
+  if (!ownerColor) return;
+  _tintColor.set(ownerColor);
+  mat.color.lerp(_tintColor, ratio);
 }
 
 /**
@@ -42,6 +53,7 @@ export function applyStateVisuals(unitGroup, state, time) {
         bodyMesh.material.emissiveIntensity = 0;
         bodyMesh.material.opacity = 1.0;
         bodyMesh.material.transparent = false;
+        applyPlayerTint(bodyMesh.material, unitGroup, PLAYER_TINT);
       }
       if (headMesh) {
         headMesh.material.opacity = 1.0;
@@ -66,6 +78,7 @@ export function applyStateVisuals(unitGroup, state, time) {
         bodyMesh.material.emissiveIntensity = pulseIntensity;
         bodyMesh.material.opacity = 1.0;
         bodyMesh.material.transparent = false;
+        applyPlayerTint(bodyMesh.material, unitGroup, PLAYER_TINT);
       }
       if (headMesh) {
         headMesh.material.opacity = 1.0;
@@ -87,6 +100,7 @@ export function applyStateVisuals(unitGroup, state, time) {
         bodyMesh.material.emissiveIntensity = 0;
         bodyMesh.material.opacity = 0.8;
         bodyMesh.material.transparent = true;
+        applyPlayerTint(bodyMesh.material, unitGroup, PLAYER_TINT);
       }
       if (headMesh) {
         headMesh.material.opacity = 0.8;
@@ -105,10 +119,11 @@ export function applyStateVisuals(unitGroup, state, time) {
       if (bodyMesh) {
         bodyMesh.material.color.copy(getColor(PALETTE.unitStale));
         if (!bodyMesh.material.emissive) bodyMesh.material.emissive = new THREE.Color();
-        bodyMesh.material.emissive.set(0xC09088);
+        bodyMesh.material.emissive.set(0xC08070);
         bodyMesh.material.emissiveIntensity = 0.1 + 0.2 * (0.5 + 0.5 * Math.sin(time * Math.PI));
         bodyMesh.material.opacity = 0.5;
         bodyMesh.material.transparent = true;
+        applyPlayerTint(bodyMesh.material, unitGroup, PLAYER_TINT_WEAK);
       }
       if (headMesh) {
         headMesh.material.opacity = 0.5;
@@ -130,6 +145,7 @@ export function applyStateVisuals(unitGroup, state, time) {
         bodyMesh.material.emissiveIntensity = 0;
         bodyMesh.material.opacity = 0.85;
         bodyMesh.material.transparent = true;
+        applyPlayerTint(bodyMesh.material, unitGroup, PLAYER_TINT);
       }
       if (headMesh) {
         headMesh.material.opacity = 0.85;
@@ -164,7 +180,7 @@ function ensureAwaitLabel(unitGroup) {
   const div = document.createElement('div');
   div.textContent = '!';
   div.style.cssText =
-    'color: #E8D0A8; font-size: 18px; font-weight: bold; ' +
+    'color: #F0C050; font-size: 18px; font-weight: bold; ' +
     'text-shadow: 0 0 4px rgba(0,0,0,0.5); pointer-events: none;';
 
   const label = new CSS2DObject(div);
@@ -210,7 +226,7 @@ function ensureBlockedLabel(unitGroup) {
   const div = document.createElement('div');
   div.textContent = '\u23F8';
   div.style.cssText =
-    'color: #A0AAB8; font-size: 14px; ' +
+    'color: #D87068; font-size: 14px; ' +
     'text-shadow: 0 0 3px rgba(0,0,0,0.3); pointer-events: none; opacity: 0.7;';
 
   const label = new CSS2DObject(div);
@@ -245,8 +261,8 @@ function ensureStaleLabel(unitGroup) {
   const div = document.createElement('div');
   div.textContent = '\u2715';
   div.style.cssText =
-    'color: #C09088; font-size: 16px; font-weight: bold; ' +
-    'text-shadow: 0 0 6px rgba(192,144,136,0.5); pointer-events: none;';
+    'color: #C86868; font-size: 16px; font-weight: bold; ' +
+    'text-shadow: 0 0 6px rgba(200,104,104,0.5); pointer-events: none;';
 
   const label = new CSS2DObject(div);
   label.position.set(0, 0.9, 0);

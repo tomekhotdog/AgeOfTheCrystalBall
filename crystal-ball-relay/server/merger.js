@@ -1,6 +1,34 @@
 // server/merger.js
 // Merge multi-user snapshots into a single combined response. Pure function.
 
+// 8 maximally-distinct player colours (~45deg hue spacing, S 65-70%, L 50-55%).
+export const DISTINCT_PALETTE = [
+  '#3070E0', // blue
+  '#E03838', // red
+  '#28C850', // green
+  '#E8B010', // gold
+  '#E028A0', // magenta
+  '#18C0C0', // teal
+  '#F08020', // orange
+  '#9030E0', // purple
+];
+
+/**
+ * When 2+ users are present, assign each a colour from DISTINCT_PALETTE
+ * (alphabetical order for stability). Single-user keeps their original colour.
+ * @param {Array<{ user: string }>} entries
+ * @returns {Map<string,string>|null} user->color map, or null if no override needed
+ */
+export function assignDistinctColors(entries) {
+  if (entries.length <= 1) return null;
+  const sorted = [...new Set(entries.map(e => e.user))].sort();
+  const colorMap = new Map();
+  sorted.forEach((user, i) => {
+    colorMap.set(user, DISTINCT_PALETTE[i % DISTINCT_PALETTE.length]);
+  });
+  return colorMap;
+}
+
 /**
  * Merge snapshots from multiple users into a combined API response.
  * @param {Array<{ user: string, color: string, snapshot: object }>} entries
@@ -14,13 +42,17 @@ export function mergeSnapshots(entries) {
   let globalLongestWait = null;
   const users = [];
 
+  // Assign distinct colours when multiple users are present
+  const colorOverrides = assignDistinctColors(entries);
+
   for (const entry of entries) {
     const { user, color, snapshot } = entry;
     const snap = snapshot || {};
+    const resolvedColor = colorOverrides ? colorOverrides.get(user) : color;
 
     users.push({
       name: user,
-      color,
+      color: resolvedColor,
       sessionCount: (snap.sessions || []).length,
     });
 
@@ -31,7 +63,7 @@ export function mergeSnapshots(entries) {
         ...s,
         id: namespacedId,
         owner: user,
-        ownerColor: color,
+        ownerColor: resolvedColor,
       });
 
       // Build groups

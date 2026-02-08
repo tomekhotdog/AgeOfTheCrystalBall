@@ -10,23 +10,24 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 // ---------------------------------------------------------------------------
 
 const PALETTE = {
-  // Meadow biome — soft sage greens
-  grass: 0xC4D8B8, grassAlt: 0xD0E0C4,
-  wildflower1: 0xE8B8C8, wildflower2: 0xC8D8E8, wildflower3: 0xF0E0C8,
-  // Forest biome — muted sage
-  forestGrass: 0xA8C0A0, forestGrassAlt: 0x98B494,
-  treeTrunk: 0xB8A090, treeLeaves: 0x9AB898, treeLeavesAlt: 0x8AAC8C,
-  // Desert biome — warm ivory tones
-  sand: 0xF0E4D0, sandAlt: 0xE8DCC4, rock: 0xD0C4B8,
-  // Mountain biome — soft stone
-  mountainStone: 0xC0B8B4, mountainStoneAlt: 0xCCC4BC, snow: 0xF5F0F0,
-  // Water — muted teal
-  water: 0x90C0D0, waterDeep: 0x80B0C4,
+  // Meadow biome -- lush greens
+  grass: 0xA8D4A0, grassAlt: 0xBCDCAC,
+  wildflower1: 0xF0A0B8, wildflower2: 0xB0CCF0, wildflower3: 0xF0D4A8,
+  // Forest biome -- rich greens
+  forestGrass: 0x88B480, forestGrassAlt: 0x78A870,
+  treeTrunk: 0xB89878, treeLeaves: 0x78B470, treeLeavesAlt: 0x68A864,
+  // Desert biome -- warm golden sand
+  sand: 0xF0D8B0, sandAlt: 0xE8CCA0, rock: 0xCCB8A0,
+  // Mountain biome -- warm stone
+  mountainStone: 0xBCB0A8, mountainStoneAlt: 0xC8BCB0, snow: 0xF5F0F0,
+  mountainPlateau: 0xC4C0A8, mountainPlateauAlt: 0xBCB8A0,
+  // Water -- vivid aqua
+  water: 0x68B8D8, waterDeep: 0x58A8D0,
   // Paths
-  path: 0xE8DCD0,
+  path: 0xE8D4C0,
   // Shared
-  dirt: 0xD4C4B0, hill: 0xB4C4A8,
-  sandstone: 0xECDCC8, stone: 0xD0C8C0,
+  dirt: 0xD0B890, hill: 0x9CBC88,
+  sandstone: 0xECD0A8, stone: 0xCCC0B0,
 };
 
 // ---------------------------------------------------------------------------
@@ -245,6 +246,16 @@ export function classifyTile(gx, gz, biome, isRiver) {
     case 'mountain': {
       // Height increases toward the map edges — dramatic peaks
       const edgeDist = Math.min(gx, gz, GRID - 1 - gx, GRID - 1 - gz);
+
+      // Flat plateau for deep-interior tiles (buildings can be placed here)
+      if (edgeDist >= 5 && rng > 0.3) {
+        return {
+          type: 'mountain_plateau',
+          height: 0.16 + rng * 0.04,
+          color: rng > 0.5 ? PALETTE.mountainPlateau : PALETTE.mountainPlateauAlt,
+        };
+      }
+
       const edgeFactor = Math.max(0, 1 - edgeDist / 6); // 0 at center, 1 at edge
       const height = 0.25 + edgeFactor * 1.1 + rng * 0.15; // 0.25 inner to 1.5 at edge
       const color = rng > 0.5 ? PALETTE.mountainStone : PALETTE.mountainStoneAlt;
@@ -432,12 +443,9 @@ export function generateTerrain(scene) {
         const entry = tiles.get(key);
         if (!entry) continue;
 
-        // Accept grass or sand tiles (meadow, forest, desert inner areas)
-        if (entry.type !== 'grass' && entry.type !== 'sand') continue;
+        // Accept grass, sand, or mountain plateau tiles
+        if (entry.type !== 'grass' && entry.type !== 'sand' && entry.type !== 'mountain_plateau') continue;
         if (usedTiles.has(key)) continue;
-
-        // Reject mountain biome tiles for buildings (too high / rocky)
-        if (entry.biome === 'mountain') continue;
 
         // 1-tile buffer from water
         let nearWater = false;
@@ -577,8 +585,8 @@ export function generateTerrain(scene) {
           decorationGroup.add(rocks);
         }
 
-        // ── Mountain: boulders (12% chance) ──────────────────────────────
-        if (biome === 'mountain' && entry.type !== 'mountain_peak' && rng < 0.12) {
+        // ── Mountain: boulders (12% chance, slopes only) ─────────────────
+        if (biome === 'mountain' && entry.type === 'mountain' && rng < 0.12) {
           const boulder = createBoulder(gx, gz);
           boulder.position.set(wx, entry.height, wz);
           decorationGroup.add(boulder);
@@ -713,10 +721,13 @@ export function generateTerrain(scene) {
    * @returns {number} surface Y coordinate
    */
   function getHeightAt(x, z) {
-    const key = `${Math.round(x)},${Math.round(z)}`;
-    const entry = tiles.get(key);
-    if (!entry) return 0.15; // fallback: default grass height
-    return entry.height;
+    const x0 = Math.floor(x), x1 = x0 + 1;
+    const z0 = Math.floor(z), z1 = z0 + 1;
+    const tx = x - x0, tz = z - z0;
+    const h = (key) => (tiles.get(key) ?? { height: 0.15 }).height;
+    const top    = h(`${x0},${z0}`) + (h(`${x1},${z0}`) - h(`${x0},${z0}`)) * tx;
+    const bottom = h(`${x0},${z1}`) + (h(`${x1},${z1}`) - h(`${x0},${z1}`)) * tx;
+    return top + (bottom - top) * tz;
   }
 
   return {

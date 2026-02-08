@@ -67,7 +67,7 @@ export class SelectionPanel {
       ${session.owner ? `
       <div class="panel-row">
         <span class="panel-row-label">Player</span>
-        <span><span class="owner-dot" style="background:${escapeHtml(session.ownerColor || '#A8D0E0')}"></span> ${escapeHtml(session.owner)}</span>
+        <span><span class="owner-dot" style="background:${escapeHtml(session.ownerColor || '#60C0F0')}"></span> ${escapeHtml(session.owner)}</span>
       </div>
       ` : ''}
       ${session.mode === 2 ? `
@@ -268,7 +268,7 @@ export class SelectionPanel {
     for (const s of sessions) {
       if (s.owner === ownerName && s.ownerColor) return s.ownerColor;
     }
-    return '#A8D0E0';
+    return '#60C0F0';
   }
 
   static formatUptime(seconds) {

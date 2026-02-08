@@ -7,8 +7,8 @@ import * as THREE from 'three';
 // ---------------------------------------------------------------------------
 
 const PALETTE = {
-  unitBody:    0xDCC8B0,
-  unitHead:    0xF0E8E0,
+  unitBody:    0xDCC0A0,
+  unitHead:    0xF0E4D8,
 };
 
 // ---------------------------------------------------------------------------
@@ -32,13 +32,13 @@ function cachedMat(key, factory) {
 
 /** Role-specific accent colours (GR palette). */
 const CLASS_COLORS = {
-  Engineer:   0xE0B890,
-  Researcher: 0xA8D0E0,
-  Intern:     0xB0D4B8,
-  Analyst:    0xE8D0A8,
-  Principal:  0xC0A8D8,
-  Security:   0xB0AAB0,
-  Barista:    0xC4A898,
+  Engineer:   0xE0A868,
+  Researcher: 0x88C8E8,
+  Intern:     0x90D098,
+  Analyst:    0xF0C880,
+  Principal:  0xB898E0,
+  Security:   0xA8A0A8,
+  Barista:    0xC89870,
 };
 
 /** Medieval names for deterministic assignment via PID. */

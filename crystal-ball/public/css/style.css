@@ -53,7 +53,7 @@ body {
 
 /* Awaiting pulse animation on the HUD */
 .hud-stat.awaiting-alert .hud-stat-value {
-  color: #E0D0A8;
+  color: #F0C050;
   animation: hudPulse 2s ease-in-out infinite;
 }
 
@@ -64,16 +64,16 @@ body {
 
 /* Blocked pulse animation on the HUD */
 .hud-stat.blocked-alert .hud-stat-value {
-  color: #C8908A;
+  color: #D87068;
   animation: hudBlockedPulse 1.5s ease-in-out infinite;
 }
 
 @keyframes hudBlockedPulse {
-  0%, 100% { opacity: 1; text-shadow: 0 0 4px rgba(200, 144, 138, 0.3); }
-  50% { opacity: 0.6; text-shadow: 0 0 12px rgba(200, 144, 138, 0.8); }
+  0%, 100% { opacity: 1; text-shadow: 0 0 4px rgba(216, 112, 104, 0.3); }
+  50% { opacity: 0.6; text-shadow: 0 0 12px rgba(216, 112, 104, 0.8); }
 }
 
-.panel-badge.blocked { background: rgba(200, 144, 138, 0.2); color: #C8908A; }
+.panel-badge.blocked { background: rgba(216, 112, 104, 0.2); color: #D87068; }
 
 /* Mode 2 context section in selection panel */
 .panel-divider {
@@ -92,7 +92,7 @@ body {
 }
 
 .panel-mode-badge.mode-1 { background: rgba(184, 180, 184, 0.15); color: #B8B4B8; }
-.panel-mode-badge.mode-2 { background: rgba(192, 168, 216, 0.2); color: #C0A8D8; }
+.panel-mode-badge.mode-2 { background: rgba(176, 136, 224, 0.2); color: #B088E0; }
 
 .panel-phase-badge {
   display: inline-block;
@@ -102,17 +102,17 @@ body {
   text-transform: uppercase;
 }
 
-.phase-planning     { background: rgba(160, 192, 216, 0.2); color: #A0C0D8; }
-.phase-researching  { background: rgba(224, 208, 168, 0.2); color: #E0D0A8; }
-.phase-coding       { background: rgba(168, 208, 176, 0.2); color: #A8D0B0; }
-.phase-testing      { background: rgba(192, 168, 216, 0.2); color: #C0A8D8; }
-.phase-debugging    { background: rgba(216, 168, 152, 0.2); color: #D8A898; }
-.phase-reviewing    { background: rgba(160, 200, 200, 0.2); color: #A0C8C8; }
+.phase-planning     { background: rgba(112, 176, 232, 0.2); color: #70B0E8; }
+.phase-researching  { background: rgba(240, 192, 80, 0.2); color: #F0C050; }
+.phase-coding       { background: rgba(96, 216, 144, 0.2); color: #60D890; }
+.phase-testing      { background: rgba(176, 136, 224, 0.2); color: #B088E0; }
+.phase-debugging    { background: rgba(224, 128, 96, 0.2); color: #E08060; }
+.phase-reviewing    { background: rgba(88, 200, 200, 0.2); color: #58C8C8; }
 .phase-documenting  { background: rgba(192, 188, 200, 0.2); color: #C0BCC8; }
 .phase-idle         { background: rgba(184, 180, 184, 0.15); color: #B8B4B8; }
 
 .panel-blocked-indicator {
-  color: #C8908A;
+  color: #D87068;
   font-weight: 600;
 }
 
@@ -162,10 +162,10 @@ body {
   letter-spacing: 0.5px;
 }
 
-.panel-badge.active { background: rgba(168, 208, 176, 0.2); color: #A8D0B0; }
-.panel-badge.awaiting { background: rgba(224, 208, 168, 0.2); color: #E0D0A8; }
+.panel-badge.active { background: rgba(96, 216, 144, 0.2); color: #60D890; }
+.panel-badge.awaiting { background: rgba(240, 192, 80, 0.2); color: #F0C050; }
 .panel-badge.idle { background: rgba(184, 180, 184, 0.2); color: #B8B4B8; }
-.panel-badge.stale { background: rgba(176, 144, 144, 0.2); color: #B09090; }
+.panel-badge.stale { background: rgba(200, 104, 104, 0.2); color: #C86868; }
 
 .selection-panel .panel-row {
   display: flex;
@@ -189,7 +189,7 @@ body {
 .cpu-bar-fill {
   height: 100%;
   border-radius: 4px;
-  background: #A8D0B0;
+  background: #60D890;
   transition: width 0.5s;
 }
 
@@ -200,11 +200,11 @@ body {
   display: inline-block;
   margin-right: 4px;
 }
-.state-dot.active { background: #A8D0B0; box-shadow: 0 0 6px #A8D0B0; }
-.state-dot.awaiting { background: #E0D0A8; box-shadow: 0 0 6px #E0D0A8; animation: pulse 2s infinite; }
+.state-dot.active { background: #60D890; box-shadow: 0 0 6px #60D890; }
+.state-dot.awaiting { background: #F0C050; box-shadow: 0 0 6px #F0C050; animation: pulse 2s infinite; }
 .state-dot.idle { background: #B8B4B8; }
-.state-dot.blocked { background: #C8908A; box-shadow: 0 0 6px #C8908A; animation: pulse 1s infinite; }
-.state-dot.stale { background: #B09090; }
+.state-dot.blocked { background: #D87068; box-shadow: 0 0 6px #D87068; animation: pulse 1s infinite; }
+.state-dot.stale { background: #C86868; }
 
 @keyframes pulse {
   0%, 100% { box-shadow: 0 0 4px currentColor; }
@@ -246,8 +246,8 @@ body {
 .unit-alert-icon {
   font-size: 16px;
   font-weight: bold;
-  color: #E0D0A8;
-  text-shadow: 0 0 8px rgba(224, 208, 168, 0.8);
+  color: #F0C050;
+  text-shadow: 0 0 8px rgba(240, 192, 80, 0.8);
   pointer-events: none;
   animation: floatUp 2s ease-in-out infinite;
 }
@@ -260,8 +260,8 @@ body {
 /* Box-select overlay (drag rectangle) */
 .box-select-overlay {
   position: fixed;
-  border: 1px solid rgba(168, 208, 176, 0.8);
-  background: rgba(168, 208, 176, 0.15);
+  border: 1px solid rgba(96, 216, 144, 0.8);
+  background: rgba(96, 216, 144, 0.15);
   pointer-events: none;
   z-index: 50;
 }
@@ -319,10 +319,10 @@ body {
 }
 
 /* State-coloured dot in tooltip */
-.unit-tooltip .tooltip-state-active { color: #A8D0B0; }
-.unit-tooltip .tooltip-state-awaiting { color: #E0D0A8; }
+.unit-tooltip .tooltip-state-active { color: #60D890; }
+.unit-tooltip .tooltip-state-awaiting { color: #F0C050; }
 .unit-tooltip .tooltip-state-idle { color: #B8B4B8; }
-.unit-tooltip .tooltip-state-stale { color: #B09090; }
+.unit-tooltip .tooltip-state-stale { color: #C86868; }
 
 /* ─── Hotkey help panel ─────────────────────────────────────────────── */
 
@@ -479,7 +479,7 @@ body {
 }
 
 .sharing-switch.on {
-  background: rgba(168, 208, 176, 0.4);
+  background: rgba(96, 216, 144, 0.4);
 }
 
 .sharing-switch::after {
@@ -514,7 +514,7 @@ body {
   background: #B8B4B8;
 }
 
-.sharing-status-dot.connected { background: #A8D0B0; }
+.sharing-status-dot.connected { background: #60D890; }
 
 .sharing-project-list {
   max-height: 150px;
@@ -705,11 +705,11 @@ canvas { display: block; }
   margin: 8px 0;
   background: rgba(255,255,255,0.05);
 }
-.warroom-state-bar .segment-active { background: #A8D0B0; }
-.warroom-state-bar .segment-awaiting { background: #E0D0A8; }
-.warroom-state-bar .segment-blocked { background: #C8908A; }
+.warroom-state-bar .segment-active { background: #60D890; }
+.warroom-state-bar .segment-awaiting { background: #F0C050; }
+.warroom-state-bar .segment-blocked { background: #D87068; }
 .warroom-state-bar .segment-idle { background: #B8B4B8; }
-.warroom-state-bar .segment-stale { background: #B09090; }
+.warroom-state-bar .segment-stale { background: #C86868; }
 
 /* Leaderboard table */
 .warroom-leaderboard {
@@ -741,10 +741,10 @@ canvas { display: block; }
   gap: 8px;
 }
 .warroom-feed-time { opacity: 0.4; min-width: 40px; }
-.warroom-feed-state-active { color: #A8D0B0; }
-.warroom-feed-state-awaiting { color: #E0D0A8; }
+.warroom-feed-state-active { color: #60D890; }
+.warroom-feed-state-awaiting { color: #F0C050; }
 .warroom-feed-state-idle { color: #B8B4B8; }
-.warroom-feed-state-stale { color: #B09090; }
+.warroom-feed-state-stale { color: #C86868; }
 
 /* ─── Minimap ──────────────────────────────────────────────────────────── */
 

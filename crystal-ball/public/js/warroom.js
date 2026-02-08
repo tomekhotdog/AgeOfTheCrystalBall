@@ -269,7 +269,7 @@ export class WarRoom {
       <div class="warroom-stat-row" style="font-size:11px;opacity:0.7;">
         <span>${counts.active} active</span>
         <span>${counts.awaiting} awaiting</span>
-        ${counts.blocked > 0 ? `<span style="color:#C8908A">${counts.blocked} blocked</span>` : ''}
+        ${counts.blocked > 0 ? `<span style="color:#D87068">${counts.blocked} blocked</span>` : ''}
         <span>${counts.idle} idle</span>
         <span>${counts.stale} stale</span>
       </div>
@@ -320,7 +320,7 @@ export class WarRoom {
     for (const r of rows) {
       const owners = ownersMap.get(r.id);
       const ownerDots = owners
-        ? owners.map(o => `<span class="owner-dot" style="background:${esc(ownerColorMap.get(o) || '#A8D0E0')}" title="${esc(o)}"></span>`).join('')
+        ? owners.map(o => `<span class="owner-dot" style="background:${esc(ownerColorMap.get(o) || '#60C0F0')}" title="${esc(o)}"></span>`).join('')
         : '';
       html += `
       <tr>
@@ -366,7 +366,7 @@ export class WarRoom {
 
     const blockedHtml = blockedSessions.length > 0
       ? blockedSessions.map(s =>
-          `<div style="color:#C8908A;font-size:11px;">${esc(s.id)} (${esc(s.group)}) - ${esc(s.context?.detail || 'blocked')}</div>`
+          `<div style="color:#D87068;font-size:11px;">${esc(s.id)} (${esc(s.group)}) - ${esc(s.context?.detail || 'blocked')}</div>`
         ).join('')
       : '';
 

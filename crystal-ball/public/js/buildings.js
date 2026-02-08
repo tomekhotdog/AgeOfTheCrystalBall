@@ -2,19 +2,19 @@
 import * as THREE from 'three';
 
 const PALETTE = {
-  grass: 0xC4D8B8,
-  grassAlt: 0xD0E0C4,
-  water: 0x90C0D0,
-  path: 0xE8DCD0,
-  dirt: 0xD8C8B4,
-  hill: 0xB4C4A8,
-  sandstone: 0xF5E8D8,
-  stone: 0xDCD4CC,
-  wood: 0xD0B8A0,
-  roof: 0xD8A898,
-  roofAlt: 0xA8C8C0,
-  babyBlue: 0xA8D0E0,
-  grYellow: 0xE8D0A8,
+  grass: 0xA8D4A0,
+  grassAlt: 0xBCDCAC,
+  water: 0x68B8D8,
+  path: 0xE8D4C0,
+  dirt: 0xD4BC94,
+  hill: 0x9CBC88,
+  sandstone: 0xF5DCC0,
+  stone: 0xD8C8B8,
+  wood: 0xD0AC88,
+  roof: 0xE09880,
+  roofAlt: 0x88C4B8,
+  babyBlue: 0x88C8E8,
+  grYellow: 0xF0C880,
 };
 
 export const BUILDING_TYPES = [

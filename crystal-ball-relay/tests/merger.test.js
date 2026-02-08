@@ -1,7 +1,7 @@
 // tests/merger.test.js
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { mergeSnapshots } from '../server/merger.js';
+import { mergeSnapshots, assignDistinctColors, DISTINCT_PALETTE } from '../server/merger.js';
 
 describe('mergeSnapshots', () => {
   it('should return empty result for empty input', () => {
@@ -227,5 +227,50 @@ describe('mergeSnapshots', () => {
     assert.equal(s.cpu, 50);
     assert.equal(s.mode, 2);
     assert.equal(s.context.phase, 'coding');
+  });
+
+  it('should assign distinct palette colours for 2+ users', () => {
+    const entries = [
+      { user: 'Bob', color: '#111111', snapshot: { sessions: [{ id: 'c1', group: 'p', cwd: '/' }], groups: [], metrics: {} } },
+      { user: 'Alice', color: '#222222', snapshot: { sessions: [{ id: 'c2', group: 'p', cwd: '/' }], groups: [], metrics: {} } },
+    ];
+    const result = mergeSnapshots(entries);
+    // Alphabetical: Alice=palette[0], Bob=palette[1]
+    const alice = result.sessions.find(s => s.owner === 'Alice');
+    const bob = result.sessions.find(s => s.owner === 'Bob');
+    assert.equal(alice.ownerColor, DISTINCT_PALETTE[0]);
+    assert.equal(bob.ownerColor, DISTINCT_PALETTE[1]);
+    // Users array also gets overridden colours
+    assert.equal(result.users.find(u => u.name === 'Alice').color, DISTINCT_PALETTE[0]);
+    assert.equal(result.users.find(u => u.name === 'Bob').color, DISTINCT_PALETTE[1]);
+  });
+
+  it('should keep original colour for single user', () => {
+    const entries = [{ user: 'Alice', color: '#CUSTOM1', snapshot: { sessions: [{ id: 'c1', group: 'p', cwd: '/' }], groups: [], metrics: {} } }];
+    const result = mergeSnapshots(entries);
+    assert.equal(result.sessions[0].ownerColor, '#CUSTOM1');
+    assert.equal(result.users[0].color, '#CUSTOM1');
+  });
+});
+
+describe('assignDistinctColors', () => {
+  it('should return null for single entry', () => {
+    assert.equal(assignDistinctColors([{ user: 'Alice' }]), null);
+  });
+
+  it('should return null for empty entries', () => {
+    assert.equal(assignDistinctColors([]), null);
+  });
+
+  it('should assign alphabetically stable colours', () => {
+    const map = assignDistinctColors([{ user: 'Zara' }, { user: 'Alice' }, { user: 'Mia' }]);
+    assert.equal(map.get('Alice'), DISTINCT_PALETTE[0]);
+    assert.equal(map.get('Mia'), DISTINCT_PALETTE[1]);
+    assert.equal(map.get('Zara'), DISTINCT_PALETTE[2]);
+  });
+
+  it('should deduplicate users', () => {
+    const map = assignDistinctColors([{ user: 'Alice' }, { user: 'Alice' }, { user: 'Bob' }]);
+    assert.equal(map.size, 2);
   });
 });

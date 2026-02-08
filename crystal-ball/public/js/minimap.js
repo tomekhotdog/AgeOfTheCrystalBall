@@ -10,21 +10,22 @@
 // ---------------------------------------------------------------------------
 
 const TILE_COLORS = {
-  grass:          '#A0B898',
-  water:          '#88AAB8',
-  sand:           '#D8CCB8',
-  mountain:       '#B0A498',
-  mountain_peak:  '#B0A498',
-  path:           '#C8BCB0',
-  bridge:         '#C8BCB0',
+  grass:          '#88C878',
+  water:          '#58A8D0',
+  sand:           '#E0C890',
+  mountain:       '#B0A898',
+  mountain_peak:  '#B0A898',
+  mountain_plateau: '#B4B098',
+  path:           '#D0C4A8',
+  bridge:         '#D0C4A8',
 };
 
 const UNIT_STATE_COLORS = {
-  active:   '#A8D0B0',
-  awaiting: '#E0D0A8',
-  idle:     '#C0B8C0',
-  stale:    '#B09090',
-  blocked:  '#A0AAB8',
+  active:   '#60D890',
+  awaiting: '#F0C050',
+  idle:     '#B0ACB0',
+  stale:    '#C86868',
+  blocked:  '#D87068',
 };
 
 /**
@@ -73,7 +74,7 @@ export function tileColor(tileType) {
  * @returns {string} CSS color
  */
 export function unitStateColor(state) {
-  return UNIT_STATE_COLORS[state] ?? '#C0B8C0';
+  return UNIT_STATE_COLORS[state] ?? '#B0ACB0';
 }
 
 /**

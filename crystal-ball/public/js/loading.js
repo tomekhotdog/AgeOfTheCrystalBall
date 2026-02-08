@@ -12,11 +12,11 @@ export class LoadingScreen {
     styleEl.textContent = `
 @keyframes crystalPulse {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(137, 207, 240, 0.4), 0 0 60px rgba(137, 207, 240, 0.2);
+    box-shadow: 0 0 20px rgba(80, 180, 240, 0.4), 0 0 60px rgba(80, 180, 240, 0.2);
     transform: scale(1);
   }
   50% {
-    box-shadow: 0 0 30px rgba(137, 207, 240, 0.6), 0 0 80px rgba(137, 207, 240, 0.3);
+    box-shadow: 0 0 30px rgba(80, 180, 240, 0.6), 0 0 80px rgba(80, 180, 240, 0.3);
     transform: scale(1.05);
   }
 }`;
@@ -60,7 +60,7 @@ export class LoadingScreen {
       width: '80px',
       height: '80px',
       borderRadius: '50%',
-      background: 'radial-gradient(circle at center, #A8D0E0 0%, transparent 70%)',
+      background: 'radial-gradient(circle at center, #60C0F0 0%, transparent 70%)',
       animation: 'crystalPulse 2.4s ease-in-out infinite',
       marginBottom: '28px',
     });

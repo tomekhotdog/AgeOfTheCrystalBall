@@ -108,6 +108,7 @@ export class WorldManager {
       }
       // Keep fresh copies of live session data on the unit record
       unit.session = session;
+      unit.mesh.userData.ownerColor = session.ownerColor || null;
     }
 
     // ── 6. Update building labels with owner dots (multi-person) ────────
@@ -121,7 +122,7 @@ export class WorldManager {
         const colorMap = new Map();
         for (const u of apiData.users) colorMap.set(u.name, u.color);
         dotsHtml = group.owners
-          .map(o => `<span class="owner-dot" style="background:${colorMap.get(o) || '#A8D0E0'}"></span>`)
+          .map(o => `<span class="owner-dot" style="background:${colorMap.get(o) || '#60C0F0'}"></span>`)
           .join('');
       }
       labelDiv.innerHTML = `${group.id} ${dotsHtml}`;
@@ -230,6 +231,7 @@ export class WorldManager {
     const mesh = createUnit(session);
     mesh.userData.type = 'unit';
     mesh.userData.sessionId = session.id;
+    mesh.userData.ownerColor = session.ownerColor || null;
 
     const bldg = this.buildings.get(session.group);
     if (!bldg) {
@@ -298,7 +300,7 @@ export class WorldManager {
       state: session.state,
       groupId: session.group,
       anchorIndex: chosenIndex,
-      targetPos: new THREE.Vector3(targetX, 0.25, targetZ),
+      targetPos: new THREE.Vector3(targetX, unitBaseY, targetZ),
       session,
       sentinelRing: null,
       lastParticleTime: 0,
@@ -320,7 +322,7 @@ export class WorldManager {
 
     // Gravestone at the unit's position
     if (this.marchInManager) {
-      this.marchInManager.placeGravestone(unit.mesh.position.x, 0, unit.mesh.position.z);
+      this.marchInManager.placeGravestone(unit.mesh.position.x, this.terrain.getHeightAt(unit.mesh.position.x, unit.mesh.position.z), unit.mesh.position.z);
     }
 
     // Death motes at the unit's position
@@ -452,6 +454,16 @@ export class WorldManager {
       // Skip lerp for patrol/foraging or marching units
       if (!usesPatrol && !unit.marching) {
         lerpToTarget(mesh, targetPos, delta);
+      }
+
+      // ── Terrain-height snap: Y follows ground under current X/Z ──────
+      if (!unit.marching) {
+        const groundY = this.terrain.getHeightAt(mesh.position.x, mesh.position.z);
+        const unitOffset = 0.1;
+        const currentBob = mesh.position.y - (mesh.userData.baseY ?? groundY + unitOffset);
+        const clampedBob = Math.max(-0.1, Math.min(0.1, currentBob));
+        mesh.position.y = groundY + unitOffset + clampedBob;
+        mesh.userData.baseY = groundY + unitOffset;
       }
 
       // ── Class-specific particle effects ────────────────────────────────

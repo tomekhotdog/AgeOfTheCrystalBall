@@ -1,50 +1,47 @@
-// daynight.test.js — Unit tests for the day/night cycle phase logic.
+// daynight.test.js — Unit tests for the UTC-based day/night cycle phase logic.
 //
 // We import only the pure `calculatePhase` function so the tests run in
 // plain Node.js without any Three.js dependency.
-import { describe, it, beforeEach } from 'node:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-// calculatePhase is a pure function exported from daynight.js — no THREE
-// dependency, so we can import it directly.
 import { calculatePhase } from '../../public/js/daynight.js';
 
 // ---------------------------------------------------------------------------
-// Phase layout (default 300 s cycle):
-//   dawn  :   0 –  15 s
-//   day   :  15 – 225 s
-//   dusk  : 225 – 240 s
-//   night : 240 – 300 s
+// UTC schedule:
+//   dawn  : 08:30 – 09:00 (510 – 540 min)
+//   day   : 09:00 – 18:00 (540 – 1080 min)
+//   dusk  : 18:00 – 18:30 (1080 – 1110 min)
+//   night : 18:30 – 08:30 (1110 – 510 min, wraps midnight)
 // ---------------------------------------------------------------------------
 
-describe('calculatePhase', () => {
+describe('calculatePhase (UTC business hours)', () => {
   // -----------------------------------------------------------------------
   // Phase identification at key boundaries
   // -----------------------------------------------------------------------
   describe('phase identification at boundaries', () => {
-    it('returns dawn at elapsed = 0', () => {
-      const { phaseName } = calculatePhase(0);
-      assert.equal(phaseName, 'dawn');
+    it('returns dawn at 08:30 (510 min)', () => {
+      assert.equal(calculatePhase(510).phaseName, 'dawn');
     });
 
-    it('returns day at elapsed = 15', () => {
-      const { phaseName } = calculatePhase(15);
-      assert.equal(phaseName, 'day');
+    it('returns day at 09:00 (540 min)', () => {
+      assert.equal(calculatePhase(540).phaseName, 'day');
     });
 
-    it('returns dusk at elapsed = 225', () => {
-      const { phaseName } = calculatePhase(225);
-      assert.equal(phaseName, 'dusk');
+    it('returns dusk at 18:00 (1080 min)', () => {
+      assert.equal(calculatePhase(1080).phaseName, 'dusk');
     });
 
-    it('returns night at elapsed = 240', () => {
-      const { phaseName } = calculatePhase(240);
-      assert.equal(phaseName, 'night');
+    it('returns night at 18:30 (1110 min)', () => {
+      assert.equal(calculatePhase(1110).phaseName, 'night');
     });
 
-    it('wraps to dawn after a full 300 s cycle', () => {
-      const { phaseName } = calculatePhase(300);
-      assert.equal(phaseName, 'dawn');
+    it('returns night at midnight (0 min)', () => {
+      assert.equal(calculatePhase(0).phaseName, 'night');
+    });
+
+    it('returns night just before dawn at 08:29 (509 min)', () => {
+      assert.equal(calculatePhase(509).phaseName, 'night');
     });
   });
 
@@ -52,76 +49,85 @@ describe('calculatePhase', () => {
   // Mid-phase identification
   // -----------------------------------------------------------------------
   describe('phase identification at midpoints', () => {
-    it('returns dawn at 7.5 s (midpoint of dawn)', () => {
-      const { phaseName } = calculatePhase(7.5);
-      assert.equal(phaseName, 'dawn');
+    it('returns dawn at 08:45 (525 min)', () => {
+      assert.equal(calculatePhase(525).phaseName, 'dawn');
     });
 
-    it('returns day at 120 s (midpoint of day)', () => {
-      const { phaseName } = calculatePhase(120);
-      assert.equal(phaseName, 'day');
+    it('returns day at 13:30 (810 min)', () => {
+      assert.equal(calculatePhase(810).phaseName, 'day');
     });
 
-    it('returns dusk at 232.5 s (midpoint of dusk)', () => {
-      const { phaseName } = calculatePhase(232.5);
-      assert.equal(phaseName, 'dusk');
+    it('returns dusk at 18:15 (1095 min)', () => {
+      assert.equal(calculatePhase(1095).phaseName, 'dusk');
     });
 
-    it('returns night at 270 s (midpoint of night)', () => {
-      const { phaseName } = calculatePhase(270);
-      assert.equal(phaseName, 'night');
+    it('returns night at 03:00 (180 min)', () => {
+      assert.equal(calculatePhase(180).phaseName, 'night');
+    });
+
+    it('returns night at 23:00 (1380 min)', () => {
+      assert.equal(calculatePhase(1380).phaseName, 'night');
     });
   });
 
   // -----------------------------------------------------------------------
-  // getPhase equivalent — phaseName at key timepoints
+  // Comprehensive time-to-phase mapping
   // -----------------------------------------------------------------------
-  describe('getPhase returns correct name at key timepoints', () => {
+  describe('time-to-phase mapping', () => {
     const cases = [
-      [0,    'dawn'],
-      [7,    'dawn'],
-      [14,   'dawn'],
-      [15,   'day'],
-      [100,  'day'],
-      [224,  'day'],
-      [225,  'dusk'],
-      [232,  'dusk'],
-      [239,  'dusk'],
-      [240,  'night'],
-      [270,  'night'],
-      [299,  'night'],
+      [0,    'night'],   // 00:00
+      [180,  'night'],   // 03:00
+      [480,  'night'],   // 08:00
+      [509,  'night'],   // 08:29
+      [510,  'dawn'],    // 08:30
+      [520,  'dawn'],    // 08:40
+      [539,  'dawn'],    // 08:59
+      [540,  'day'],     // 09:00
+      [720,  'day'],     // 12:00
+      [1079, 'day'],     // 17:59
+      [1080, 'dusk'],    // 18:00
+      [1095, 'dusk'],    // 18:15
+      [1109, 'dusk'],    // 18:29
+      [1110, 'night'],   // 18:30
+      [1200, 'night'],   // 20:00
+      [1439, 'night'],   // 23:59
     ];
 
-    for (const [elapsed, expected] of cases) {
-      it(`elapsed=${elapsed}s => ${expected}`, () => {
-        assert.equal(calculatePhase(elapsed).phaseName, expected);
+    for (const [minutes, expected] of cases) {
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      it(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} (${minutes} min) => ${expected}`, () => {
+        assert.equal(calculatePhase(minutes).phaseName, expected);
       });
     }
   });
 
   // -----------------------------------------------------------------------
-  // cycleProgress (0.0 – 1.0)
+  // cycleProgress (0.0 – 1.0, cycle starts at dawn 08:30)
   // -----------------------------------------------------------------------
-  describe('getCycleProgress', () => {
-    it('returns 0 at the start of the cycle', () => {
-      const { cycleProgress } = calculatePhase(0);
-      assert.equal(cycleProgress, 0);
+  describe('cycleProgress', () => {
+    it('returns 0 at dawn start (08:30)', () => {
+      const { cycleProgress } = calculatePhase(510);
+      assert.ok(Math.abs(cycleProgress) < 1e-9,
+        `Expected 0 but got ${cycleProgress}`);
     });
 
-    it('returns 0.5 at the halfway point (150 s)', () => {
-      const { cycleProgress } = calculatePhase(150);
+    it('returns ~0.5 at 20:30 (12h after dawn)', () => {
+      // 20:30 = 1230 min, 12h = 720 min after 510
+      const { cycleProgress } = calculatePhase(1230);
       assert.ok(Math.abs(cycleProgress - 0.5) < 1e-9,
         `Expected ~0.5 but got ${cycleProgress}`);
     });
 
-    it('returns close to 1.0 just before the cycle ends', () => {
-      const { cycleProgress } = calculatePhase(299.9);
-      assert.ok(cycleProgress > 0.99 && cycleProgress < 1.0,
+    it('returns close to 1.0 just before dawn', () => {
+      const { cycleProgress } = calculatePhase(509.9);
+      assert.ok(cycleProgress > 0.99,
         `Expected >0.99 but got ${cycleProgress}`);
     });
 
-    it('wraps back to ~0 at exactly 300 s', () => {
-      const { cycleProgress } = calculatePhase(300);
+    it('wraps back to ~0 at 08:30 the next day', () => {
+      // 510 + 1440 = 1950 should wrap to 510
+      const { cycleProgress } = calculatePhase(1950);
       assert.ok(cycleProgress < 0.01,
         `Expected ~0 (wrapped) but got ${cycleProgress}`);
     });
@@ -131,66 +137,78 @@ describe('calculatePhase', () => {
   // phaseProgress (0.0 – 1.0 within each phase)
   // -----------------------------------------------------------------------
   describe('phaseProgress within a phase', () => {
-    it('is 0.0 at the start of dawn', () => {
-      const { phaseProgress } = calculatePhase(0);
-      assert.equal(phaseProgress, 0);
-    });
-
-    it('is ~0.5 at midpoint of dawn (7.5 s)', () => {
-      const { phaseProgress } = calculatePhase(7.5);
-      assert.ok(Math.abs(phaseProgress - 0.5) < 1e-9,
-        `Expected ~0.5 but got ${phaseProgress}`);
-    });
-
-    it('is 0.0 at the start of day (15 s)', () => {
-      const { phaseProgress } = calculatePhase(15);
+    it('is 0.0 at dawn start (08:30)', () => {
+      const { phaseProgress } = calculatePhase(510);
       assert.ok(Math.abs(phaseProgress) < 1e-9,
-        `Expected ~0 but got ${phaseProgress}`);
+        `Expected 0 but got ${phaseProgress}`);
     });
 
-    it('is ~0.5 at midpoint of day (120 s)', () => {
-      const { phaseProgress } = calculatePhase(120);
+    it('is ~0.5 at dawn midpoint (08:45 = 525 min)', () => {
+      const { phaseProgress } = calculatePhase(525);
       assert.ok(Math.abs(phaseProgress - 0.5) < 1e-9,
         `Expected ~0.5 but got ${phaseProgress}`);
     });
 
-    it('is ~0.5 at midpoint of night (270 s)', () => {
-      const { phaseProgress } = calculatePhase(270);
+    it('is 0.0 at day start (09:00)', () => {
+      const { phaseProgress } = calculatePhase(540);
+      assert.ok(Math.abs(phaseProgress) < 1e-9,
+        `Expected 0 but got ${phaseProgress}`);
+    });
+
+    it('is ~0.5 at day midpoint (13:30 = 810 min)', () => {
+      const { phaseProgress } = calculatePhase(810);
+      assert.ok(Math.abs(phaseProgress - 0.5) < 1e-9,
+        `Expected ~0.5 but got ${phaseProgress}`);
+    });
+
+    it('is 0.0 at dusk start (18:00)', () => {
+      const { phaseProgress } = calculatePhase(1080);
+      assert.ok(Math.abs(phaseProgress) < 1e-9,
+        `Expected 0 but got ${phaseProgress}`);
+    });
+
+    it('is ~0.5 at dusk midpoint (18:15 = 1095 min)', () => {
+      const { phaseProgress } = calculatePhase(1095);
+      assert.ok(Math.abs(phaseProgress - 0.5) < 1e-9,
+        `Expected ~0.5 but got ${phaseProgress}`);
+    });
+
+    it('is 0.0 at night start (18:30)', () => {
+      const { phaseProgress } = calculatePhase(1110);
+      assert.ok(Math.abs(phaseProgress) < 1e-9,
+        `Expected 0 but got ${phaseProgress}`);
+    });
+
+    it('is ~0.5 at night midpoint (01:30 = 90 min, 7h after night start)', () => {
+      // Night starts at 1110, duration 840 min, midpoint = 1110 + 420 = 1530 -> wraps to 90 min
+      const { phaseProgress } = calculatePhase(90);
+      // nightElapsed = (1440 - 1110) + 90 = 420, progress = 420/840 = 0.5
       assert.ok(Math.abs(phaseProgress - 0.5) < 1e-9,
         `Expected ~0.5 but got ${phaseProgress}`);
     });
   });
 
   // -----------------------------------------------------------------------
-  // Cycle wrapping
+  // Wrapping (values outside 0-1440)
   // -----------------------------------------------------------------------
-  describe('cycle wrapping', () => {
-    it('elapsed = 300 wraps identically to elapsed = 0', () => {
-      const a = calculatePhase(0);
-      const b = calculatePhase(300);
+  describe('wrapping', () => {
+    it('1440 + 540 wraps identically to 540', () => {
+      const a = calculatePhase(540);
+      const b = calculatePhase(1980);
       assert.equal(a.phaseName, b.phaseName);
-      assert.equal(a.phaseIndex, b.phaseIndex);
       assert.ok(Math.abs(a.phaseProgress - b.phaseProgress) < 1e-9);
     });
 
-    it('elapsed = 315 wraps identically to elapsed = 15', () => {
-      const a = calculatePhase(15);
-      const b = calculatePhase(315);
-      assert.equal(a.phaseName, b.phaseName);
-      assert.equal(a.phaseIndex, b.phaseIndex);
-      assert.ok(Math.abs(a.phaseProgress - b.phaseProgress) < 1e-9);
-    });
-
-    it('large elapsed values wrap correctly (3000 s = 10 full cycles)', () => {
-      const a = calculatePhase(0);
-      const b = calculatePhase(3000);
+    it('large values wrap correctly (14400 min = 10 full days)', () => {
+      const a = calculatePhase(810);
+      const b = calculatePhase(810 + 14400);
       assert.equal(a.phaseName, b.phaseName);
       assert.ok(Math.abs(a.cycleProgress - b.cycleProgress) < 1e-9);
     });
 
-    it('negative elapsed wraps correctly', () => {
-      // -60 s should be equivalent to 240 s (300 - 60).
-      const a = calculatePhase(240);
+    it('negative values wrap correctly', () => {
+      // -60 min => 1440 - 60 = 1380 min => night
+      const a = calculatePhase(1380);
       const b = calculatePhase(-60);
       assert.equal(a.phaseName, b.phaseName);
       assert.ok(Math.abs(a.phaseProgress - b.phaseProgress) < 1e-9);
@@ -198,49 +216,28 @@ describe('calculatePhase', () => {
   });
 
   // -----------------------------------------------------------------------
-  // Custom cycleDuration
+  // Edge cases
   // -----------------------------------------------------------------------
-  describe('custom cycleDuration', () => {
-    const customDuration = 600; // twice as long
-
-    it('phases still occur in the same order', () => {
-      assert.equal(calculatePhase(0, customDuration).phaseName, 'dawn');
-      assert.equal(calculatePhase(30, customDuration).phaseName, 'day');
-      assert.equal(calculatePhase(450, customDuration).phaseName, 'dusk');
-      assert.equal(calculatePhase(480, customDuration).phaseName, 'night');
+  describe('edge cases', () => {
+    it('fractional minutes work (08:30:30 = 510.5)', () => {
+      const result = calculatePhase(510.5);
+      assert.equal(result.phaseName, 'dawn');
+      assert.ok(Math.abs(result.phaseProgress - 0.5 / 30) < 1e-9);
     });
 
-    it('cycle wraps at customDuration', () => {
-      const a = calculatePhase(0, customDuration);
-      const b = calculatePhase(customDuration, customDuration);
-      assert.equal(a.phaseName, b.phaseName);
-      assert.ok(Math.abs(a.phaseProgress - b.phaseProgress) < 1e-9);
+    it('night wrapping: 23:59 is night', () => {
+      assert.equal(calculatePhase(1439).phaseName, 'night');
     });
 
-    it('cycleProgress is 0.5 at half the custom duration', () => {
-      const { cycleProgress } = calculatePhase(300, customDuration);
-      assert.ok(Math.abs(cycleProgress - 0.5) < 1e-9,
-        `Expected ~0.5 but got ${cycleProgress}`);
+    it('night wrapping: 00:01 is night', () => {
+      assert.equal(calculatePhase(1).phaseName, 'night');
     });
 
-    it('phase durations scale proportionally', () => {
-      // Dawn is 15/300 of the cycle. At customDuration=600, dawn lasts 30 s.
-      // So at elapsed=29 we should still be in dawn.
-      assert.equal(calculatePhase(29, customDuration).phaseName, 'dawn');
-      // At elapsed=30 we should enter day.
-      assert.equal(calculatePhase(30, customDuration).phaseName, 'day');
-    });
-
-    it('short cycle (60 s) works correctly', () => {
-      const short = 60;
-      // Dawn would be 15/300 * 60 = 3 s
-      assert.equal(calculatePhase(0, short).phaseName, 'dawn');
-      assert.equal(calculatePhase(2.9, short).phaseName, 'dawn');
-      assert.equal(calculatePhase(3, short).phaseName, 'day');
-      // Full wrap
-      const a = calculatePhase(0, short);
-      const b = calculatePhase(60, short);
-      assert.equal(a.phaseName, b.phaseName);
+    it('night progress increases through midnight', () => {
+      const before = calculatePhase(1400); // 23:20
+      const after = calculatePhase(100);   // 01:40
+      assert.ok(after.phaseProgress > before.phaseProgress,
+        `Expected ${after.phaseProgress} > ${before.phaseProgress}`);
     });
   });
 });

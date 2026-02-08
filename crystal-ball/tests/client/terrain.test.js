@@ -125,6 +125,13 @@ function classifyTile(gx, gz, biome, isRiver) {
     }
     case 'mountain': {
       const edgeDist = Math.min(gx, gz, GRID - 1 - gx, GRID - 1 - gz);
+      if (edgeDist >= 5 && rng > 0.3) {
+        return {
+          type: 'mountain_plateau',
+          height: 0.16 + rng * 0.04,
+          color: rng > 0.5 ? 0xC4C0A8 : 0xBCB8A0,
+        };
+      }
       const edgeFactor = Math.max(0, 1 - edgeDist / 6);
       const height = 0.2 + edgeFactor * 0.6;
       const isOuterRing = edgeDist <= 1;
@@ -185,9 +192,8 @@ function simulateTerrain() {
         const key = `${wx},${wz}`;
         const entry = tiles.get(key);
         if (!entry) continue;
-        if (entry.type !== 'grass' && entry.type !== 'sand') continue;
+        if (entry.type !== 'grass' && entry.type !== 'sand' && entry.type !== 'mountain_plateau') continue;
         if (usedTiles.has(key)) continue;
-        if (entry.biome === 'mountain') continue;
 
         let nearWater = false;
         for (let dx = -1; dx <= 1 && !nearWater; dx++) {
@@ -412,16 +418,32 @@ describe('classifyTile', () => {
     assert.ok(info.height >= 0.10 && info.height <= 0.14);
   });
 
-  it('returns mountain or mountain_peak for mountain biome', () => {
+  it('returns mountain, mountain_peak, or mountain_plateau for mountain biome', () => {
     // Inner mountain tile (far from edges)
     const inner = classifyTile(10, 10, 'mountain', false);
-    assert.ok(inner.type === 'mountain' || inner.type === 'mountain_peak');
-    assert.ok(inner.height >= 0.2);
+    assert.ok(inner.type === 'mountain' || inner.type === 'mountain_peak' || inner.type === 'mountain_plateau');
+    assert.ok(inner.height >= 0.16);
 
     // Edge mountain tile
     const edge = classifyTile(0, 0, 'mountain', false);
     assert.equal(edge.type, 'mountain_peak');
     assert.ok(edge.height >= 0.6, `edge mountain height ${edge.height} should be >= 0.6`);
+  });
+
+  it('mountain_plateau height is in [0.16, 0.20]', () => {
+    // Find a tile that produces a plateau (edgeDist >= 5, rng > 0.3)
+    let found = false;
+    for (let gx = 5; gx < GRID - 5; gx++) {
+      for (let gz = 5; gz < GRID - 5; gz++) {
+        const info = classifyTile(gx, gz, 'mountain', false);
+        if (info.type === 'mountain_plateau') {
+          assert.ok(info.height >= 0.16 && info.height <= 0.20,
+            `plateau height ${info.height} should be in [0.16, 0.20]`);
+          found = true;
+        }
+      }
+    }
+    assert.ok(found, 'should find at least one mountain_plateau tile');
   });
 
   it('mountain height increases toward map edges', () => {
@@ -573,21 +595,23 @@ describe('Full terrain simulation', () => {
       assert.ok(tile.z >= -HALF && tile.z < HALF, `z=${tile.z} out of bounds`);
     });
 
-    it('returned tile is a grass or sand type', () => {
+    it('returned tile is a grass, sand, or mountain_plateau type', () => {
       const tile = terrain.getAvailableGrassTile();
       assert.ok(tile !== null);
       const entry = terrain.tiles.get(`${tile.x},${tile.z}`);
       assert.ok(
-        entry.type === 'grass' || entry.type === 'sand',
-        `tile type '${entry.type}' is not grass or sand`
+        entry.type === 'grass' || entry.type === 'sand' || entry.type === 'mountain_plateau',
+        `tile type '${entry.type}' is not grass, sand, or mountain_plateau`
       );
     });
 
-    it('returned tile is not in a mountain biome', () => {
+    it('mountain biome tiles are only returned if they are plateaus', () => {
       const tile = terrain.getAvailableGrassTile();
       assert.ok(tile !== null);
       const entry = terrain.tiles.get(`${tile.x},${tile.z}`);
-      assert.notEqual(entry.biome, 'mountain');
+      if (entry.biome === 'mountain') {
+        assert.equal(entry.type, 'mountain_plateau');
+      }
     });
 
     it('returned tile is not adjacent to water', () => {

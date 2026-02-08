@@ -93,31 +93,35 @@ describe('minimapToWorld', () => {
 
 describe('tileColor', () => {
   it('returns green for grass', () => {
-    assert.equal(tileColor('grass'), '#A0B898');
+    assert.equal(tileColor('grass'), '#88C878');
   });
 
   it('returns blue for water', () => {
-    assert.equal(tileColor('water'), '#88AAB8');
+    assert.equal(tileColor('water'), '#58A8D0');
   });
 
   it('returns tan for sand', () => {
-    assert.equal(tileColor('sand'), '#D8CCB8');
+    assert.equal(tileColor('sand'), '#E0C890');
   });
 
   it('returns brown for mountain', () => {
-    assert.equal(tileColor('mountain'), '#B0A498');
+    assert.equal(tileColor('mountain'), '#B0A898');
   });
 
   it('returns brown for mountain_peak', () => {
-    assert.equal(tileColor('mountain_peak'), '#B0A498');
+    assert.equal(tileColor('mountain_peak'), '#B0A898');
+  });
+
+  it('returns warm stone for mountain_plateau', () => {
+    assert.equal(tileColor('mountain_plateau'), '#B4B098');
   });
 
   it('returns light brown for path', () => {
-    assert.equal(tileColor('path'), '#C8BCB0');
+    assert.equal(tileColor('path'), '#D0C4A8');
   });
 
   it('returns light brown for bridge', () => {
-    assert.equal(tileColor('bridge'), '#C8BCB0');
+    assert.equal(tileColor('bridge'), '#D0C4A8');
   });
 
   it('returns a default color for unknown tile types', () => {
@@ -134,30 +138,30 @@ describe('tileColor', () => {
 
 describe('unitStateColor', () => {
   it('returns green for active', () => {
-    assert.equal(unitStateColor('active'), '#A8D0B0');
+    assert.equal(unitStateColor('active'), '#60D890');
   });
 
   it('returns gold for awaiting', () => {
-    assert.equal(unitStateColor('awaiting'), '#E0D0A8');
+    assert.equal(unitStateColor('awaiting'), '#F0C050');
   });
 
   it('returns grey for idle', () => {
-    assert.equal(unitStateColor('idle'), '#C0B8C0');
+    assert.equal(unitStateColor('idle'), '#B0ACB0');
   });
 
   it('returns dark red for stale', () => {
-    assert.equal(unitStateColor('stale'), '#B09090');
+    assert.equal(unitStateColor('stale'), '#C86868');
   });
 
-  it('returns muted blue for blocked', () => {
-    assert.equal(unitStateColor('blocked'), '#A0AAB8');
+  it('returns red for blocked', () => {
+    assert.equal(unitStateColor('blocked'), '#D87068');
   });
 
   it('returns a default color for unknown states', () => {
     const color = unitStateColor('unknown');
     assert.equal(typeof color, 'string');
     assert.ok(color.startsWith('#'), 'should be a hex color');
-    assert.equal(color, '#C0B8C0');
+    assert.equal(color, '#B0ACB0');
   });
 });
 

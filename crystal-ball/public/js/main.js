@@ -323,7 +323,7 @@ async function init() {
 
     // Day/night cycle
     perf.mark('daynight');
-    dayNight.update(elapsed);
+    dayNight.update();
     const phase = dayNight.getPhase();
     if (qualityHigh) {
       bloomPass.strength = phase === 'night' ? 0.6 : phase === 'dusk' ? 0.45 : 0.3;

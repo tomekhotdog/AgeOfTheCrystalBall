@@ -134,16 +134,19 @@ async function main() {
     res.json(store.getLatest());
   });
 
+  // Pin local user to GR baby blue so they always stand out.
+  const GR_BLUE = "#89CFF0";
+
   // API -- mode detection (tells the frontend if multi-person is available)
   app.get("/api/mode", (_req, res) => {
+    const user = identity ? { ...identity, color: GR_BLUE } : null;
     res.json({
       mode: isMulti ? "multi" : "local",
-      user: identity,
+      user,
       relay: flags.relayUrl || null,
     });
   });
 
-  // API -- combined view (proxy to relay subscriber)
   app.get("/api/combined", async (_req, res) => {
     if (!subscriber) {
       return res.status(404).json({ error: "No relay configured" });
@@ -152,6 +155,62 @@ async function main() {
     if (!data) {
       return res.status(502).json({ error: "Relay unavailable" });
     }
+
+    // Always inject fresh local sessions so the local user's units appear
+    // even if publishing is delayed or sharing is toggled off.
+    if (identity) {
+      const localData = store.getLatest();
+
+      // Strip stale copies of our sessions from the relay data
+      data.sessions = (data.sessions || []).filter(
+        (s) => s.owner !== identity.name
+      );
+
+      // Add fresh local sessions with proper namespacing + GR blue
+      for (const s of localData.sessions || []) {
+        data.sessions.push({
+          ...s,
+          id: `${identity.name}/${s.id}`,
+          owner: identity.name,
+          ownerColor: GR_BLUE,
+        });
+      }
+
+      // Rebuild groups from the full session list
+      const groupMap = new Map();
+      for (const s of data.sessions) {
+        if (!s.group) continue;
+        let g = groupMap.get(s.group);
+        if (!g) {
+          g = { id: s.group, cwd: s.cwd, session_ids: [], owners: new Set() };
+          groupMap.set(s.group, g);
+        }
+        g.session_ids.push(s.id);
+        if (s.owner) g.owners.add(s.owner);
+      }
+      data.groups = [...groupMap.values()].map((g) => ({
+        id: g.id,
+        cwd: g.cwd,
+        session_count: g.session_ids.length,
+        session_ids: g.session_ids,
+        owners: [...g.owners],
+      }));
+
+      // Ensure local user in users array with correct colour
+      if (!data.users) data.users = [];
+      const userIdx = data.users.findIndex((u) => u.name === identity.name);
+      const localUserEntry = {
+        name: identity.name,
+        color: GR_BLUE,
+        sessionCount: (localData.sessions || []).length,
+      };
+      if (userIdx >= 0) {
+        data.users[userIdx] = localUserEntry;
+      } else {
+        data.users.push(localUserEntry);
+      }
+    }
+
     res.json(data);
   });
 
