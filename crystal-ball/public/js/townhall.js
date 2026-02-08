@@ -1,4 +1,4 @@
-// townhall.js — GR Town Hall building mesh and "Full Deployment" victory screen.
+// townhall.js -- GR HQ building mesh and "Market Open" victory screen.
 //
 // Pure functions (isFullDeployment, shouldTriggerVictory, victoryFade) are
 // exported for testing without THREE.js. The TownHall and VictoryScreen
@@ -14,13 +14,13 @@ const VICTORY_DISPLAY_DURATION = 5000;  // ms — how long the banner stays at f
 const VICTORY_FADE_DURATION    = 500;   // ms — fade-out after display
 const VICTORY_COOLDOWN         = 30000; // ms — minimum gap between triggers
 
-// Town Hall palette
-const TH_STONE   = 0x7A7A80;
-const TH_NAVY    = 0x1B2A4A;
-const TH_RED     = 0xC41E3A;
-const TH_DOOR    = 0x3A2A1A;
-const TH_WINDOW  = 0xEEDDCC;
-const TH_GLOW    = 0xFFAA66;
+// Town Hall palette (GR HQ colors)
+const TH_STONE     = 0x7A7A80;
+const TH_BABYBLUE  = 0x89CFF0;
+const TH_GRYELLOW  = 0xFFD700;
+const TH_DOOR      = 0x3A2A1A;
+const TH_WINDOW    = 0xEEDDCC;
+const TH_GLOW      = 0xFFD700;
 
 // ---------------------------------------------------------------------------
 // Pure functions (testable without THREE)
@@ -127,35 +127,35 @@ export class TownHall {
     tower1.position.set(-0.7, 2.0, -0.7);
     g.add(tower1);
 
-    // Tower 1 cone roof
-    const cone1 = m(new THREE.ConeGeometry(0.4, 0.5, 8), TH_RED);
+    // Tower 1 cone roof (baby blue)
+    const cone1 = m(new THREE.ConeGeometry(0.4, 0.5, 8), TH_BABYBLUE);
     cone1.position.set(-0.7, 2.65, -0.7);
     g.add(cone1);
 
-    // --- Tower (top-right corner) — shorter ---
+    // --- Tower (top-right corner) -- shorter ---
     const tower2 = m(new THREE.BoxGeometry(0.6, 0.6, 0.6), TH_STONE);
     tower2.position.set(0.7, 1.9, -0.7);
     g.add(tower2);
 
-    // Tower 2 cone roof
-    const cone2 = m(new THREE.ConeGeometry(0.4, 0.5, 8), TH_NAVY);
+    // Tower 2 cone roof (GR yellow)
+    const cone2 = m(new THREE.ConeGeometry(0.4, 0.5, 8), TH_GRYELLOW);
     cone2.position.set(0.7, 2.45, -0.7);
     g.add(cone2);
 
     // --- GR Banner on front face ---
-    // Navy background
+    // Baby blue background
     const bannerBg = m(
       new THREE.PlaneGeometry(0.4, 0.6),
-      TH_NAVY,
+      TH_BABYBLUE,
       { side: THREE.DoubleSide }
     );
     bannerBg.position.set(0.3, 1.1, 1.01);
     g.add(bannerBg);
 
-    // Red stripe across middle of banner
+    // Yellow stripe across middle of banner
     const bannerStripe = m(
       new THREE.PlaneGeometry(0.4, 0.12),
-      TH_RED,
+      TH_GRYELLOW,
       { side: THREE.DoubleSide }
     );
     bannerStripe.position.set(0.3, 1.1, 1.02);
@@ -261,7 +261,7 @@ export class VictoryScreen {
 
     const text = document.createElement('div');
     text.className = 'victory-text';
-    text.textContent = 'FULL DEPLOYMENT';
+    text.textContent = 'MARKET OPEN';
     overlay.appendChild(text);
 
     document.body.appendChild(overlay);

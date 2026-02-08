@@ -2,22 +2,26 @@
 // Shows a floating parchment card when the cursor hovers over a unit for 300ms.
 
 import * as THREE from 'three';
+import { rankDisplayTitle } from './units.js';
 
 // ---------------------------------------------------------------------------
 // Pure helpers (exported for testing)
 // ---------------------------------------------------------------------------
 
 /**
- * Map rank key to display name.
+ * Map rank key to display name (role-aware via rankDisplayTitle).
  * @param {string|null} rank
+ * @param {string} [unitClass]
  * @returns {string}
  */
-export function rankDisplayName(rank) {
+export function rankDisplayName(rank, unitClass) {
+  if (unitClass) return rankDisplayTitle(rank, unitClass);
+  // Fallback for calls without unitClass
   switch (rank) {
-    case 'bronze': return 'Apprentice';
-    case 'silver': return 'Journeyman';
-    case 'gold':   return 'Master';
-    default:       return 'Recruit';
+    case 'bronze': return 'Senior';
+    case 'silver': return 'Principal';
+    case 'gold':   return 'Distinguished';
+    default:       return '';
   }
 }
 
@@ -75,11 +79,11 @@ export function computeTooltipPosition(mouseX, mouseY, tooltipWidth, tooltipHeig
  */
 export function formatTooltipHTML(unitData, session) {
   const rankStar = unitData.rank === 'gold' ? '\u2605' : '\u2606';
-  const rankLabel = rankDisplayName(unitData.rank);
+  const rankLabel = rankDisplayName(unitData.rank, unitData.unitClass);
 
   let html = '';
-  html += `<div class="tooltip-name">${escapeHTML(unitData.unitName)} the ${escapeHTML(unitData.unitClass)}</div>`;
-  html += `<div class="tooltip-rank">${rankStar} ${escapeHTML(rankLabel)}</div>`;
+  html += `<div class="tooltip-name">${escapeHTML(unitData.unitName)} the ${escapeHTML(rankLabel)}</div>`;
+  html += `<div class="tooltip-rank">${rankStar} ${escapeHTML(unitData.unitClass)}</div>`;
   html += `<div class="tooltip-divider"></div>`;
 
   if (session) {
@@ -88,7 +92,7 @@ export function formatTooltipHTML(unitData, session) {
     html += `<div class="tooltip-row"><span class="tooltip-label">CPU</span><span class="tooltip-value">${session.cpu.toFixed(1)}%</span></div>`;
     html += `<div class="tooltip-row"><span class="tooltip-label">Memory</span><span class="tooltip-value">${session.mem} MB</span></div>`;
     html += `<div class="tooltip-row"><span class="tooltip-label">Uptime</span><span class="tooltip-value">${formatUptime(session.age_seconds)}</span></div>`;
-    html += `<div class="tooltip-row"><span class="tooltip-label">Platoon</span><span class="tooltip-value">${escapeHTML(session.group)}</span></div>`;
+    html += `<div class="tooltip-row"><span class="tooltip-label">Desk</span><span class="tooltip-value">${escapeHTML(session.group)}</span></div>`;
   } else {
     html += `<div class="tooltip-row"><span class="tooltip-label">No session data</span></div>`;
   }

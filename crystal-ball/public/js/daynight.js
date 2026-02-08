@@ -9,8 +9,8 @@ import * as THREE from 'three';
 const PHASES = [
   { name: 'dawn',  duration: 45,  dirColor: '#FFB7A5', dirIntensity: 0.9,  ambColor: '#BB8899', ambIntensity: 0.4,  sky: '#E8C8B8' },
   { name: 'day',   duration: 120, dirColor: '#FFF5E6', dirIntensity: 1.3,  ambColor: '#99AABB', ambIntensity: 0.55, sky: '#E8E0D4' },
-  { name: 'dusk',  duration: 45,  dirColor: '#FF8C42', dirIntensity: 1.0,  ambColor: '#997755', ambIntensity: 0.35, sky: '#D4A574' },
-  { name: 'night', duration: 90,  dirColor: '#6688CC', dirIntensity: 0.65, ambColor: '#556677', ambIntensity: 0.45, sky: '#252848' },
+  { name: 'dusk',  duration: 45,  dirColor: '#FF8C42', dirIntensity: 1.0,  ambColor: '#997755', ambIntensity: 0.45, sky: '#D4A574' },
+  { name: 'night', duration: 90,  dirColor: '#D8E4FF', dirIntensity: 1.8,  ambColor: '#AABBDD', ambIntensity: 1.0,  sky: '#5A6A90' },
 ];
 
 // Pre-computed total so we don't recalculate every frame.
@@ -24,7 +24,7 @@ const SUN_POSITIONS = [
   { x: 10, y: 3,  z:  0 },   // dawn  — east horizon
   { x:  5, y: 10, z:  5 },   // day   — high noon
   { x:  0, y: 3,  z: -10 },  // dusk  — west horizon
-  { x: -5, y: 2,  z: -5 },   // night — below / dim
+  { x: -5, y: 8,  z: -5 },   // night — full moon high overhead
 ];
 
 // ---------------------------------------------------------------------------

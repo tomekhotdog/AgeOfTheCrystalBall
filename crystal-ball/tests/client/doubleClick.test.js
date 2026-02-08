@@ -1,4 +1,4 @@
-// doubleClick.test.js — Unit tests for the double-click selection pure helpers.
+// doubleClick.test.js -- Unit tests for the double-click selection pure helpers.
 //
 // The pure functions under test (findAllOfClass, findAllInGroup, isDoubleClick)
 // have no THREE.js dependency, but the module imports THREE at the top level,
@@ -22,44 +22,44 @@ import {
 describe('findAllOfClass', () => {
   it('returns empty array when no units match the target class', () => {
     const units = [
-      { sessionId: 'a', unitClass: 'Scholar' },
-      { sessionId: 'b', unitClass: 'Sentinel' },
+      { sessionId: 'a', unitClass: 'Researcher' },
+      { sessionId: 'b', unitClass: 'Analyst' },
     ];
-    const result = findAllOfClass('Builder', units);
+    const result = findAllOfClass('Engineer', units);
     assert.deepEqual(result, []);
   });
 
   it('returns matching sessionIds when some units match', () => {
     const units = [
-      { sessionId: 'a', unitClass: 'Builder' },
-      { sessionId: 'b', unitClass: 'Scholar' },
-      { sessionId: 'c', unitClass: 'Builder' },
-      { sessionId: 'd', unitClass: 'Ghost' },
+      { sessionId: 'a', unitClass: 'Engineer' },
+      { sessionId: 'b', unitClass: 'Researcher' },
+      { sessionId: 'c', unitClass: 'Engineer' },
+      { sessionId: 'd', unitClass: 'Security' },
     ];
-    const result = findAllOfClass('Builder', units);
+    const result = findAllOfClass('Engineer', units);
     assert.deepEqual(result, ['a', 'c']);
   });
 
   it('returns all sessionIds when every unit matches', () => {
     const units = [
-      { sessionId: 'x', unitClass: 'Sentinel' },
-      { sessionId: 'y', unitClass: 'Sentinel' },
-      { sessionId: 'z', unitClass: 'Sentinel' },
+      { sessionId: 'x', unitClass: 'Analyst' },
+      { sessionId: 'y', unitClass: 'Analyst' },
+      { sessionId: 'z', unitClass: 'Analyst' },
     ];
-    const result = findAllOfClass('Sentinel', units);
+    const result = findAllOfClass('Analyst', units);
     assert.deepEqual(result, ['x', 'y', 'z']);
   });
 
   it('returns empty array for an empty units array', () => {
-    const result = findAllOfClass('Builder', []);
+    const result = findAllOfClass('Engineer', []);
     assert.deepEqual(result, []);
   });
 
-  it('is case-sensitive — "builder" does not match "Builder"', () => {
+  it('is case-sensitive -- "engineer" does not match "Engineer"', () => {
     const units = [
-      { sessionId: 'a', unitClass: 'Builder' },
+      { sessionId: 'a', unitClass: 'Engineer' },
     ];
-    const result = findAllOfClass('builder', units);
+    const result = findAllOfClass('engineer', units);
     assert.deepEqual(result, []);
   });
 });
@@ -119,7 +119,7 @@ describe('isDoubleClick', () => {
   });
 
   it('returns false when interval exactly equals the threshold', () => {
-    // exactly 350ms — not strictly less than, so false
+    // exactly 350ms -- not strictly less than, so false
     assert.equal(isDoubleClick(1000, 1350), false);
   });
 
@@ -134,9 +134,9 @@ describe('isDoubleClick', () => {
   });
 
   it('uses custom threshold when provided', () => {
-    // 150ms apart, custom threshold 100ms — should be false
+    // 150ms apart, custom threshold 100ms -- should be false
     assert.equal(isDoubleClick(1000, 1150, 100), false);
-    // 50ms apart, custom threshold 100ms — should be true
+    // 50ms apart, custom threshold 100ms -- should be true
     assert.equal(isDoubleClick(1000, 1050, 100), true);
   });
 

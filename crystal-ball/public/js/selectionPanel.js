@@ -1,5 +1,7 @@
-// selectionPanel.js — Selection panel DOM generation and updates.
+// selectionPanel.js -- Selection panel DOM generation and updates.
 // Shows detailed info for a selected unit or a group summary.
+
+import { classifyUnit, rankFromAge, rankDisplayTitle } from './units.js';
 
 export class SelectionPanel {
   constructor() {
@@ -18,11 +20,14 @@ export class SelectionPanel {
     const uptime = SelectionPanel.formatUptime(session.age_seconds);
     const cpuPct = Math.min(session.cpu, 100).toFixed(1);
     const memMB = typeof session.mem === 'number' ? session.mem.toFixed(0) : '—';
+    const role = classifyUnit(session);
+    const rank = rankFromAge(session.age_seconds ?? 0);
+    const roleTitle = rankDisplayTitle(rank, role);
 
     this.el.innerHTML = `
       <div class="panel-header">
         <span class="panel-title">${escapeHtml(session.id)}</span>
-        <span class="panel-badge ${session.state}">${session.state}</span>
+        <span class="panel-badge ${session.state}">${escapeHtml(roleTitle)}</span>
       </div>
       <div class="panel-row">
         <span class="panel-row-label">Project</span>

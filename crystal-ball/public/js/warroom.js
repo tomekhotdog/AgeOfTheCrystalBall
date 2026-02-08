@@ -1,5 +1,5 @@
-// warroom.js — War Room stats dashboard panel.
-// Slide-in panel with army overview, platoon leaderboard, and activity feed.
+// warroom.js -- Trading Floor stats dashboard panel.
+// Slide-in panel with portfolio overview, desk leaderboard, and trade log.
 
 // ---------------------------------------------------------------------------
 // Pure helper functions (exported for testing)
@@ -126,15 +126,15 @@ export class WarRoom {
 
     this.el.innerHTML = `
       <div class="warroom-header">
-        <span class="warroom-title">War Room</span>
+        <span class="warroom-title">Trading Floor</span>
         <button class="warroom-close">&times;</button>
       </div>
       <div class="warroom-section" data-section="overview">
-        <div class="warroom-section-title">Army Overview</div>
+        <div class="warroom-section-title">Portfolio Overview</div>
         <div class="warroom-overview-body"></div>
       </div>
       <div class="warroom-section" data-section="leaderboard">
-        <div class="warroom-section-title">Platoon Leaderboard</div>
+        <div class="warroom-section-title">Desk Leaderboard</div>
         <div class="warroom-leaderboard-body"></div>
       </div>
       <div class="warroom-section" data-section="mode2">
@@ -142,7 +142,7 @@ export class WarRoom {
         <div class="warroom-mode2-body"></div>
       </div>
       <div class="warroom-section" data-section="feed">
-        <div class="warroom-section-title">Activity Feed</div>
+        <div class="warroom-section-title">Trade Log</div>
         <div class="warroom-feed"></div>
       </div>
     `;
@@ -285,7 +285,7 @@ export class WarRoom {
 
     let html = `<table class="warroom-leaderboard">
       <tr>
-        <th>Platoon</th>
+        <th>Desk</th>
         <th>Units</th>
         <th>Active</th>
         <th>Avg CPU</th>

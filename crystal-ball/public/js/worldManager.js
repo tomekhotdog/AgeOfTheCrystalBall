@@ -3,7 +3,7 @@
 
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { createBuilding, BUILDING_TYPES } from './buildings.js';
+import { createBuilding, BUILDING_TYPES, BUILDING_LABELS } from './buildings.js';
 import { createUnit, classifyUnit, _geomCache, _accessoryMatCache } from './units.js';
 import { getActivityForGroup, getActivityForSession } from './activities.js';
 import { applyStateVisuals, updateChildIndicator } from './stateVisuals.js';
@@ -162,7 +162,7 @@ export class WorldManager {
     // Get the activity pair for this group (uses the sequential index, not the string id)
     const activityPair = getActivityForGroup(this.buildingTypeIndex - 1);
 
-    // CSS2D label floating above the building
+    // CSS2D label floating above the building (project/repo name)
     const labelDiv = document.createElement('div');
     labelDiv.className = 'building-label';
     labelDiv.textContent = group.id;
@@ -437,15 +437,15 @@ export class WorldManager {
 
     // Cooldown intervals (seconds) per class
     const COOLDOWNS = {
-      Builder:  2.5,
-      Scholar:  4.0,
-      Ghost:    3.0,
+      Engineer:   2.5,
+      Researcher: 4.0,
+      Security:   3.0,
     };
 
     const cooldown = COOLDOWNS[unitClass];
     if (!cooldown) {
-      // Sentinel uses persistent rings, not timed bursts
-      this._updateSentinelRing(unit, session);
+      // Analyst uses persistent rings, not timed bursts
+      this._updateAnalystRing(unit, session);
       return;
     }
 
@@ -455,34 +455,34 @@ export class WorldManager {
     const pos = unit.mesh.position;
 
     switch (unitClass) {
-      case 'Builder':
+      case 'Engineer':
         this.particles.spawnBuilderSparks(pos);
         break;
-      case 'Scholar':
+      case 'Researcher':
         this.particles.spawnScholarPages(pos);
         break;
-      case 'Ghost':
+      case 'Security':
         this.particles.spawnGhostWisps(pos);
         break;
     }
   }
 
   // ---------------------------------------------------------------------------
-  // _updateSentinelRing — create/remove persistent sentinel ring
+  // _updateAnalystRing — create/remove persistent analyst ring
   // ---------------------------------------------------------------------------
 
   /**
-   * Manages the sentinel ring lifecycle: create when unit becomes Sentinel,
+   * Manages the analyst ring lifecycle: create when unit becomes Analyst,
    * remove when it transitions away.
    * @param {object} unit
    * @param {object} session
    */
-  _updateSentinelRing(unit, session) {
-    const isSentinel = classifyUnit(session) === 'Sentinel';
+  _updateAnalystRing(unit, session) {
+    const isAnalyst = classifyUnit(session) === 'Analyst';
 
-    if (isSentinel && !unit.sentinelRing) {
+    if (isAnalyst && !unit.sentinelRing) {
       unit.sentinelRing = this.particles.createSentinelRing(unit.mesh.position);
-    } else if (!isSentinel && unit.sentinelRing) {
+    } else if (!isAnalyst && unit.sentinelRing) {
       this.particles.removeRing(unit.sentinelRing);
       unit.sentinelRing = null;
     }

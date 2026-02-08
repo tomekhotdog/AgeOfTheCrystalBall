@@ -1,4 +1,4 @@
-// tooltips.test.js — Unit tests for the tooltip pure helper functions.
+// tooltips.test.js -- Unit tests for the tooltip pure helper functions.
 //
 // The functions under test (rankDisplayName, formatUptime,
 // computeTooltipPosition, formatTooltipHTML) are pure logic with no THREE.js
@@ -18,32 +18,42 @@ import {
 } from '../../public/js/tooltips.js';
 
 // ---------------------------------------------------------------------------
-// rankDisplayName
+// rankDisplayName (role-aware)
 // ---------------------------------------------------------------------------
 
 describe('rankDisplayName', () => {
-  it('returns Recruit for null', () => {
-    assert.equal(rankDisplayName(null), 'Recruit');
+  it('returns role base title for null rank with unitClass', () => {
+    assert.equal(rankDisplayName(null, 'Engineer'), 'Engineer');
   });
 
-  it('returns Apprentice for bronze', () => {
-    assert.equal(rankDisplayName('bronze'), 'Apprentice');
+  it('returns Senior Engineer for bronze + Engineer', () => {
+    assert.equal(rankDisplayName('bronze', 'Engineer'), 'Senior Engineer');
   });
 
-  it('returns Journeyman for silver', () => {
-    assert.equal(rankDisplayName('silver'), 'Journeyman');
+  it('returns Principal Engineer for silver + Engineer', () => {
+    assert.equal(rankDisplayName('silver', 'Engineer'), 'Principal Engineer');
   });
 
-  it('returns Master for gold', () => {
-    assert.equal(rankDisplayName('gold'), 'Master');
+  it('returns Distinguished Engineer for gold + Engineer', () => {
+    assert.equal(rankDisplayName('gold', 'Engineer'), 'Distinguished Engineer');
   });
 
-  it('returns Recruit for unknown rank', () => {
-    assert.equal(rankDisplayName('platinum'), 'Recruit');
+  it('returns Senior Analyst for bronze/silver/gold + Analyst', () => {
+    assert.equal(rankDisplayName('bronze', 'Analyst'), 'Senior Analyst');
+    assert.equal(rankDisplayName('silver', 'Analyst'), 'Senior Analyst');
+    assert.equal(rankDisplayName('gold', 'Analyst'), 'Senior Analyst');
   });
 
-  it('returns Recruit for undefined', () => {
-    assert.equal(rankDisplayName(undefined), 'Recruit');
+  it('returns Senior [Role] for other roles with any rank', () => {
+    assert.equal(rankDisplayName('bronze', 'Researcher'), 'Senior Researcher');
+    assert.equal(rankDisplayName(null, 'Researcher'), 'Researcher');
+  });
+
+  it('fallback without unitClass returns generic labels', () => {
+    assert.equal(rankDisplayName(null), '');
+    assert.equal(rankDisplayName('bronze'), 'Senior');
+    assert.equal(rankDisplayName('silver'), 'Principal');
+    assert.equal(rankDisplayName('gold'), 'Distinguished');
   });
 });
 
@@ -141,7 +151,7 @@ describe('computeTooltipPosition', () => {
 describe('formatTooltipHTML', () => {
   const unitData = {
     unitName: 'Aldric',
-    unitClass: 'Builder',
+    unitClass: 'Engineer',
     rank: 'silver',
   };
 
@@ -150,7 +160,7 @@ describe('formatTooltipHTML', () => {
     cpu: 45.2,
     mem: 128,
     age_seconds: 5025,
-    group: 'SimExLab',
+    group: 'SimExchange',
   };
 
   it('contains the unit name', () => {
@@ -158,14 +168,14 @@ describe('formatTooltipHTML', () => {
     assert.ok(html.includes('Aldric'), 'Should contain unit name');
   });
 
-  it('contains the unit class', () => {
+  it('contains the unit role', () => {
     const html = formatTooltipHTML(unitData, session);
-    assert.ok(html.includes('Builder'), 'Should contain unit class');
+    assert.ok(html.includes('Engineer'), 'Should contain unit role');
   });
 
-  it('contains the rank display name', () => {
+  it('contains the role-aware rank display title', () => {
     const html = formatTooltipHTML(unitData, session);
-    assert.ok(html.includes('Journeyman'), 'Silver rank should display as Journeyman');
+    assert.ok(html.includes('Principal Engineer'), 'Silver rank + Engineer should display as Principal Engineer');
   });
 
   it('contains state with correct CSS class for active', () => {
@@ -196,15 +206,15 @@ describe('formatTooltipHTML', () => {
     assert.ok(html.includes('1h 23m 45s'), 'Should contain formatted uptime');
   });
 
-  it('contains group/platoon name', () => {
+  it('contains group/desk name', () => {
     const html = formatTooltipHTML(unitData, session);
-    assert.ok(html.includes('SimExLab'), 'Should contain group name');
+    assert.ok(html.includes('SimExchange'), 'Should contain group name');
   });
 
   it('handles null session gracefully', () => {
     const html = formatTooltipHTML(unitData, null);
     assert.ok(html.includes('Aldric'), 'Should still contain unit name');
-    assert.ok(html.includes('Builder'), 'Should still contain class');
+    assert.ok(html.includes('Engineer'), 'Should still contain role');
     assert.ok(html.includes('No session data'), 'Should show fallback text');
   });
 
@@ -220,7 +230,7 @@ describe('formatTooltipHTML', () => {
   });
 
   it('escapes HTML characters in unit name', () => {
-    const xssUnit = { unitName: '<script>alert(1)</script>', unitClass: 'Builder', rank: null };
+    const xssUnit = { unitName: '<script>alert(1)</script>', unitClass: 'Engineer', rank: null };
     const html = formatTooltipHTML(xssUnit, null);
     assert.ok(!html.includes('<script>'), 'Should escape HTML tags');
     assert.ok(html.includes('&lt;script&gt;'), 'Should contain escaped tags');

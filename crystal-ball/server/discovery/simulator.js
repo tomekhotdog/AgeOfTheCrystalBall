@@ -6,11 +6,12 @@
 
 // ── Simulated project groups ────────────────────────────────────────────────
 const SIMULATED_GROUPS = [
-  { name: "SimExLab", cwd: "/home/tomek/projects/SimExLab", baseSessionCount: 4 },
-  { name: "FPA-328", cwd: "/home/tomek/projects/FPA-328", baseSessionCount: 2 },
-  { name: "INCIDENT-18071", cwd: "/home/tomek/projects/INCIDENT-18071", baseSessionCount: 1 },
-  { name: "DOTFILES", cwd: "/home/tomek/projects/DOTFILES", baseSessionCount: 3 },
-  { name: "Q1TouchPoint", cwd: "/home/tomek/projects/Q1TouchPoint", baseSessionCount: 2 },
+  { name: "SimExchange", cwd: "/home/tomek/projects/SimExchange", baseSessionCount: 3 },
+  { name: "Tyburn", cwd: "/home/tomek/projects/Tyburn", baseSessionCount: 2 },
+  { name: "Epsilon", cwd: "/home/tomek/projects/Epsilon", baseSessionCount: 2 },
+  { name: "Admiral", cwd: "/home/tomek/projects/Admiral", baseSessionCount: 2 },
+  { name: "Minx", cwd: "/home/tomek/projects/Minx", baseSessionCount: 1 },
+  { name: "SignalEngine", cwd: "/home/tomek/projects/SignalEngine", baseSessionCount: 2 },
 ];
 
 // ── Mode 2: Simulated tasks with phase cycles ──────────────────────────────

@@ -8,7 +8,7 @@ const PALETTE = {
   unitAwait: 0xF0D05A,
   unitIdle: 0xB0B0B0,
   unitStale: 0x888888,
-  unitBlocked: 0xC41E3A,
+  unitBlocked: 0x8899AA,
   crystalGlow: 0xB08EEC,
 };
 
@@ -117,22 +117,20 @@ export function applyStateVisuals(unitGroup, state, time) {
       break;
     }
 
-    // ----- BLOCKED: red emissive pulse, floating "X" label -----
+    // ----- BLOCKED: subdued idle — muted blue-grey, static pause icon -----
     case 'blocked': {
       if (bodyMesh) {
-        bodyMesh.material.color.copy(getColor(PALETTE.unitBody));
-        if (!bodyMesh.material.emissive) bodyMesh.material.emissive = new THREE.Color();
-        const pulseIntensity = 0.3 + 0.3 * Math.sin(time * Math.PI * 6); // 3Hz
-        bodyMesh.material.emissive.set(PALETTE.unitBlocked);
-        bodyMesh.material.emissiveIntensity = pulseIntensity;
-        bodyMesh.material.opacity = 1.0;
-        bodyMesh.material.transparent = false;
+        bodyMesh.material.color.copy(getColor(PALETTE.unitBlocked));
+        bodyMesh.material.emissive?.set(0x000000);
+        bodyMesh.material.emissiveIntensity = 0;
+        bodyMesh.material.opacity = 0.85;
+        bodyMesh.material.transparent = true;
       }
       if (headMesh) {
-        headMesh.material.opacity = 1.0;
-        headMesh.material.transparent = false;
+        headMesh.material.opacity = 0.85;
+        headMesh.material.transparent = true;
       }
-      speedMultiplier = 0.3;
+      speedMultiplier = 0.4;
       removeAwaitLabel(unitGroup);
       ensureBlockedLabel(unitGroup);
       if (unitGroup.scale.y < 0.9) unitGroup.scale.y = 1.0;
@@ -204,10 +202,10 @@ function ensureBlockedLabel(unitGroup) {
   if (_blockedLabelCount >= MAX_BLOCKED_LABELS) return;
 
   const div = document.createElement('div');
-  div.textContent = '\u2716';
+  div.textContent = '\u23F8';
   div.style.cssText =
-    'color: #C41E3A; font-size: 18px; font-weight: bold; ' +
-    'text-shadow: 0 0 4px rgba(0,0,0,0.5); pointer-events: none;';
+    'color: #8899AA; font-size: 14px; ' +
+    'text-shadow: 0 0 3px rgba(0,0,0,0.3); pointer-events: none; opacity: 0.7;';
 
   const label = new CSS2DObject(div);
   label.position.set(0, 0.9, 0);

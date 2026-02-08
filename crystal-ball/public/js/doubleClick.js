@@ -11,7 +11,7 @@ import * as THREE from 'three';
 /**
  * Given a class name and an array of unit descriptors, return the sessionIds
  * of all units that match the target class.
- * @param {string} targetClass — e.g. 'Builder', 'Scholar'
+ * @param {string} targetClass -- e.g. 'Engineer', 'Researcher'
  * @param {Array<{ sessionId: string, unitClass: string }>} units
  * @returns {string[]} matching session IDs
  */

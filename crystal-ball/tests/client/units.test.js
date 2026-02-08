@@ -1,9 +1,9 @@
-// units.test.js — Unit tests for the unit class system, persistent names,
-// and rank badges.
+// units.test.js -- Unit tests for the unit role system, persistent names,
+// rank badges, and role-aware growth framework titles.
 //
-// The functions under test (classifyUnit, nameFromPid, rankFromAge) are pure
-// logic with no THREE.js dependency, but the module imports THREE at the top
-// level, so we run via the three-mock-loader:
+// The functions under test (classifyUnit, nameFromPid, rankFromAge, rankDisplayTitle)
+// are pure logic with no THREE.js dependency, but the module imports THREE at
+// the top level, so we run via the three-mock-loader:
 //
 //   node --loader ./tests/client/three-mock-loader.js --test tests/client/units.test.js
 //
@@ -11,7 +11,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  classifyUnit, nameFromPid, rankFromAge,
+  classifyUnit, nameFromPid, rankFromAge, rankDisplayTitle,
   hashStringToIndex, createUnit,
   _geomCache, _accessoryMatCache,
 } from '../../public/js/units.js';
@@ -21,53 +21,53 @@ import {
 // ---------------------------------------------------------------------------
 
 describe('classifyUnit', () => {
-  it('returns Ghost for stale sessions', () => {
+  it('returns Security for stale sessions', () => {
     const result = classifyUnit({ state: 'stale', has_children: false, age_seconds: 100 });
-    assert.equal(result, 'Ghost');
+    assert.equal(result, 'Security');
   });
 
-  it('returns Scout for active sessions younger than 120 s', () => {
+  it('returns Intern for active sessions younger than 120 s', () => {
     const result = classifyUnit({ state: 'active', has_children: false, age_seconds: 60 });
-    assert.equal(result, 'Scout');
+    assert.equal(result, 'Intern');
   });
 
-  it('returns Builder for active sessions with children', () => {
+  it('returns Engineer for active sessions with children', () => {
     const result = classifyUnit({ state: 'active', has_children: true, age_seconds: 500 });
-    assert.equal(result, 'Builder');
+    assert.equal(result, 'Engineer');
   });
 
-  it('returns Sentinel for awaiting sessions', () => {
+  it('returns Analyst for awaiting sessions', () => {
     const result = classifyUnit({ state: 'awaiting', has_children: false, age_seconds: 500 });
-    assert.equal(result, 'Sentinel');
+    assert.equal(result, 'Analyst');
   });
 
-  it('returns Veteran for active sessions older than 3600 s', () => {
+  it('returns Principal for active sessions older than 3600 s', () => {
     const result = classifyUnit({ state: 'active', has_children: false, age_seconds: 4000 });
-    assert.equal(result, 'Veteran');
+    assert.equal(result, 'Principal');
   });
 
-  it('returns Scholar for active sessions with no special conditions', () => {
+  it('returns Researcher for active sessions with no special conditions', () => {
     const result = classifyUnit({ state: 'active', has_children: false, age_seconds: 500 });
-    assert.equal(result, 'Scholar');
+    assert.equal(result, 'Researcher');
   });
 
-  it('returns Peasant for idle sessions with no special conditions', () => {
+  it('returns Barista for idle sessions with no special conditions', () => {
     const result = classifyUnit({ state: 'idle', has_children: false, age_seconds: 500 });
-    assert.equal(result, 'Peasant');
+    assert.equal(result, 'Barista');
   });
 
   // -----------------------------------------------------------------------
   // Priority ordering
   // -----------------------------------------------------------------------
 
-  it('Ghost beats Scout (stale + age < 120 yields Ghost, not Scout)', () => {
+  it('Security beats Intern (stale + age < 120 yields Security, not Intern)', () => {
     const result = classifyUnit({ state: 'stale', has_children: false, age_seconds: 60 });
-    assert.equal(result, 'Ghost');
+    assert.equal(result, 'Security');
   });
 
-  it('Scout beats Builder (age < 120 + has_children yields Scout, not Builder)', () => {
+  it('Intern beats Engineer (age < 120 + has_children yields Intern, not Engineer)', () => {
     const result = classifyUnit({ state: 'active', has_children: true, age_seconds: 60 });
-    assert.equal(result, 'Scout');
+    assert.equal(result, 'Intern');
   });
 });
 
@@ -81,7 +81,7 @@ describe('nameFromPid', () => {
     assert.equal(typeof name, 'string');
   });
 
-  it('is deterministic — same pid always gives the same name', () => {
+  it('is deterministic -- same pid always gives the same name', () => {
     const a = nameFromPid(7);
     const b = nameFromPid(7);
     assert.equal(a, b);
@@ -99,7 +99,7 @@ describe('nameFromPid', () => {
     assert.ok(name.length > 0, 'name should be non-empty');
   });
 
-  it('wraps around — high pids still produce valid names', () => {
+  it('wraps around -- high pids still produce valid names', () => {
     const a = nameFromPid(50);
     const b = nameFromPid(100);
     assert.equal(typeof a, 'string');
@@ -114,13 +114,13 @@ describe('nameFromPid', () => {
 // ---------------------------------------------------------------------------
 
 describe('rankFromAge', () => {
-  it('returns null for age < 300 (Recruit)', () => {
+  it('returns null for age < 300 (base title)', () => {
     assert.equal(rankFromAge(0), null);
     assert.equal(rankFromAge(150), null);
     assert.equal(rankFromAge(299), null);
   });
 
-  it('returns bronze at age = 300 (Apprentice threshold)', () => {
+  it('returns bronze at age = 300 (Senior threshold)', () => {
     assert.equal(rankFromAge(300), 'bronze');
   });
 
@@ -128,7 +128,7 @@ describe('rankFromAge', () => {
     assert.equal(rankFromAge(1000), 'bronze');
   });
 
-  it('returns silver at age = 1800 (Journeyman threshold)', () => {
+  it('returns silver at age = 1800 (Principal threshold)', () => {
     assert.equal(rankFromAge(1800), 'silver');
   });
 
@@ -136,12 +136,48 @@ describe('rankFromAge', () => {
     assert.equal(rankFromAge(5000), 'silver');
   });
 
-  it('returns gold at age = 7200 (Master threshold)', () => {
+  it('returns gold at age = 7200 (Distinguished threshold)', () => {
     assert.equal(rankFromAge(7200), 'gold');
   });
 
   it('returns gold at age = 10000', () => {
     assert.equal(rankFromAge(10000), 'gold');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// rankDisplayTitle (GR Growth Framework)
+// ---------------------------------------------------------------------------
+
+describe('rankDisplayTitle', () => {
+  it('Engineer track: base -> Senior -> Principal -> Distinguished', () => {
+    assert.equal(rankDisplayTitle(null, 'Engineer'), 'Engineer');
+    assert.equal(rankDisplayTitle('bronze', 'Engineer'), 'Senior Engineer');
+    assert.equal(rankDisplayTitle('silver', 'Engineer'), 'Principal Engineer');
+    assert.equal(rankDisplayTitle('gold', 'Engineer'), 'Distinguished Engineer');
+  });
+
+  it('Analyst track: base -> Senior Analyst (stays Senior)', () => {
+    assert.equal(rankDisplayTitle(null, 'Analyst'), 'Analyst');
+    assert.equal(rankDisplayTitle('bronze', 'Analyst'), 'Senior Analyst');
+    assert.equal(rankDisplayTitle('silver', 'Analyst'), 'Senior Analyst');
+    assert.equal(rankDisplayTitle('gold', 'Analyst'), 'Senior Analyst');
+  });
+
+  it('Other roles: base -> Senior [Role]', () => {
+    assert.equal(rankDisplayTitle(null, 'Researcher'), 'Researcher');
+    assert.equal(rankDisplayTitle('bronze', 'Researcher'), 'Senior Researcher');
+    assert.equal(rankDisplayTitle('silver', 'Researcher'), 'Senior Researcher');
+    assert.equal(rankDisplayTitle('gold', 'Researcher'), 'Senior Researcher');
+  });
+
+  it('Intern/Barista/Security also get Senior prefix', () => {
+    assert.equal(rankDisplayTitle(null, 'Intern'), 'Intern');
+    assert.equal(rankDisplayTitle('bronze', 'Intern'), 'Senior Intern');
+    assert.equal(rankDisplayTitle(null, 'Barista'), 'Barista');
+    assert.equal(rankDisplayTitle('bronze', 'Barista'), 'Senior Barista');
+    assert.equal(rankDisplayTitle(null, 'Security'), 'Security');
+    assert.equal(rankDisplayTitle('bronze', 'Security'), 'Senior Security');
   });
 });
 
@@ -186,7 +222,7 @@ describe('geometry cache', () => {
     assert.ok(_geomCache.size > 0, 'geometry cache should have entries after createUnit');
   });
 
-  it('two units of the same class share body geometry', () => {
+  it('two units of the same role share body geometry', () => {
     _geomCache.clear();
     _accessoryMatCache.clear();
 
@@ -194,9 +230,9 @@ describe('geometry cache', () => {
     const cacheSizeAfterFirst = _geomCache.size;
     const u2 = createUnit({ id: 'b', pid: 2, state: 'active', has_children: true, age_seconds: 600 });
 
-    // Both are Builder class, so cache size should not grow for body/head
+    // Both are Engineer role, so cache size should not grow for body/head
     assert.equal(_geomCache.size, cacheSizeAfterFirst,
-      'cache should not grow for second unit of same class');
+      'cache should not grow for second unit of same role');
 
     // Body geometry instances should be identical
     const body1 = u1.getObjectByName('body');
@@ -205,7 +241,7 @@ describe('geometry cache', () => {
     assert.equal(body1.geometry, body2.geometry, 'body geometry should be shared');
   });
 
-  it('two units of the same class have distinct body materials', () => {
+  it('two units of the same role have distinct body materials', () => {
     _geomCache.clear();
     _accessoryMatCache.clear();
 
@@ -238,26 +274,26 @@ describe('geometry cache', () => {
     createUnit({ id: 'b', pid: 2, state: 'active', has_children: true, age_seconds: 600 });
 
     assert.equal(_accessoryMatCache.size, matCountAfterFirst,
-      'accessory material cache should not grow for second Builder');
+      'accessory material cache should not grow for second Engineer');
   });
 });
 
 // ---------------------------------------------------------------------------
-// Deterministic Peasant Accessories
+// Deterministic Barista Accessories
 // ---------------------------------------------------------------------------
 
-describe('deterministic Peasant accessories', () => {
+describe('deterministic Barista accessories', () => {
   it('same session ID always produces the same accessory', () => {
     _geomCache.clear();
     _accessoryMatCache.clear();
 
-    const session = { id: 'peasant-test-1', pid: 99, state: 'idle', has_children: false, age_seconds: 500 };
+    const session = { id: 'barista-test-1', pid: 99, state: 'idle', has_children: false, age_seconds: 500 };
     const u1 = createUnit(session);
     const u2 = createUnit(session);
 
     const acc1 = u1.getObjectByName('accessory');
     const acc2 = u2.getObjectByName('accessory');
-    assert.ok(acc1 && acc2, 'both Peasant units should have accessories');
+    assert.ok(acc1 && acc2, 'both Barista units should have accessories');
   });
 
   it('different session IDs can produce different accessories', () => {
@@ -267,7 +303,7 @@ describe('deterministic Peasant accessories', () => {
     // With enough different IDs, at least 2 different accessories should appear
     const accessoryTypes = new Set();
     for (let i = 0; i < 20; i++) {
-      const session = { id: `peasant-vary-${i}`, pid: 99, state: 'idle', has_children: false, age_seconds: 500 };
+      const session = { id: `barista-vary-${i}`, pid: 99, state: 'idle', has_children: false, age_seconds: 500 };
       const u = createUnit(session);
       const acc = u.getObjectByName('accessory');
       if (acc) accessoryTypes.add(acc.children?.length ?? 0);

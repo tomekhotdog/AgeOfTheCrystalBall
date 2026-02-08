@@ -1,21 +1,84 @@
-# Crystal Ball - Active Context Protocol
+# Crystal Ball - Active Context Protocol (Mode 2)
 
-Crystal Ball is a real-time AoE2-style visualization of Claude Code sessions. When a Claude session reports its context via a sidecar file, Crystal Ball can show richer visuals: what task you're working on, what phase you're in, and whether you're blocked.
+Crystal Ball is a real-time AoE2-style visualization of Claude Code sessions.
+When a Claude session reports its context via a sidecar file, Crystal Ball
+shows richer visuals: what task you're working on, what phase you're in, and
+whether you're blocked waiting for user input.
 
-## How It Works
+## Modes
 
-- **Mode 1** (passive): Crystal Ball infers session state from OS-level metrics (CPU usage, process age). This works automatically with no setup.
-- **Mode 2** (active): When a sidecar file exists for your session, Crystal Ball reads it to get richer context. Units show phase-appropriate animations and the selection panel shows task details.
+- **Mode 1** (passive): Crystal Ball infers session state from OS-level
+  metrics (CPU usage, process age). Works automatically with no setup.
+- **Mode 2** (active): A Claude Code hook writes a sidecar file after every
+  tool use and lifecycle event. Crystal Ball reads it to show phase-appropriate
+  animations, task details, and blocked/active state.
+
+## Quick Install
+
+```bash
+cd crystal-ball/hooks
+./install-hooks.sh
+```
+
+This copies the hook to `~/.crystal-ball/`, creates the sessions directory,
+and merges the configuration into `~/.claude/settings.json`. Safe to run
+multiple times.
+
+To uninstall:
+
+```bash
+./uninstall-hooks.sh
+```
+
+## Hook Events
+
+The hook handles six Claude Code lifecycle events:
+
+| Event | When | What the hook does |
+|---|---|---|
+| `SessionStart` | New session begins | Creates a fresh sidecar (`blocked: false`) |
+| `PostToolUse` | After every tool call | Infers phase from tool, updates detail, sets `blocked: false` |
+| `Stop` | Claude finishes responding | Sets `blocked: true` (waiting for user) |
+| `UserPromptSubmit` | User types a message | Sets `blocked: false`, captures prompt preview |
+| `Notification` | Permission/idle prompt | Reinforces `blocked: true` |
+| `SessionEnd` | Session terminates | Deletes the sidecar file (cleanup) |
+
+### Phase Inference (PostToolUse)
+
+The hook infers the current work phase from the tool name:
+
+| Tools | Phase |
+|---|---|
+| `Read`, `Grep`, `Glob`, `WebSearch`, `WebFetch` | `researching` |
+| `Write`, `Edit`, `NotebookEdit` | `coding` |
+| `Bash` (test commands) | `testing` |
+| `Bash` (git commands) | `reviewing` |
+| `Bash` (other) | `coding` |
+| `Task*`, `EnterPlanMode`, `AskUserQuestion` | `planning` |
+
+### Blocked Detection
+
+The key insight: **`Stop` = Claude finished, waiting for user**. The hook
+sets `blocked: true` on Stop and `blocked: false` on PostToolUse and
+UserPromptSubmit. This gives accurate real-time detection of whether a
+session needs attention.
+
+Flow:
+```
+Claude working (tools firing)  →  blocked: false
+Claude stops responding        →  blocked: true
+User submits new prompt        →  blocked: false
+Claude starts using tools      →  blocked: false (reinforced)
+```
 
 ## Sidecar Directory
 
-Sidecar files are stored in a central directory, **not** in your project. This avoids littering project directories with state files.
+Sidecar files are stored centrally, not in project directories.
 
-- **Default location:** `~/.crystal-ball/sessions/`
-- **Override:** Set the `CRYSTAL_BALL_DIR` environment variable to use a different directory.
-- **File naming:** Each session writes `<session_id>.json` in this directory.
-
-The directory is created automatically by the hook if it doesn't exist.
+- **Default:** `~/.crystal-ball/sessions/`
+- **Override:** Set `CRYSTAL_BALL_DIR` environment variable
+- **Naming:** `<session_id>.json`
+- **Cleanup:** Files are deleted on `SessionEnd`
 
 ## Sidecar File Format
 
@@ -33,75 +96,60 @@ The directory is created automatically by the hook if it doesn't exist.
 
 ### Fields
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `session_id` | string | No | Your session identifier |
-| `cwd` | string | Yes | Working directory (used to match sidecar to discovered process) |
-| `task` | string | Yes | Short description of current task |
-| `phase` | string | Yes | One of: `planning`, `researching`, `coding`, `testing`, `debugging`, `reviewing`, `documenting`, `idle` |
-| `blocked` | boolean | No | Set to `true` when waiting for user input or external dependency |
-| `detail` | string | No | Current activity detail (e.g., file being edited) |
-| `updated_at` | ISO 8601 | Yes | When this file was last written |
+| Field | Type | Description |
+|---|---|---|
+| `session_id` | string | Claude Code session UUID |
+| `cwd` | string | Working directory (used to match to OS process) |
+| `task` | string | Current task description |
+| `phase` | string | One of: `planning`, `researching`, `coding`, `testing`, `debugging`, `reviewing`, `documenting`, `idle` |
+| `blocked` | boolean | `true` when waiting for user input |
+| `detail` | string | Current activity (file, command, search) |
+| `updated_at` | ISO 8601 | Last update timestamp |
 
-The sidecar file is read every poll cycle (default 2s). Stale files (>10 minutes without update) are deprioritized.
+Sidecar files are read every poll cycle (default 2s). Files older than 10
+minutes without update are marked stale and deprioritized.
 
-## Installing the Auto-Hook
+## Manual Overrides
 
-The Crystal Ball hook automatically writes sidecar files based on tool usage. To install:
+### Setting the task
 
-1. Copy `hooks/crystal-ball-hook.sh` to a stable location
-2. Make it executable: `chmod +x /path/to/crystal-ball-hook.sh`
-3. Add to your project's `.claude/settings.json`:
-
-```json
-{
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [{
-          "type": "command",
-          "command": "/path/to/crystal-ball-hook.sh"
-        }]
-      }
-    ]
-  }
-}
-```
-
-4. Optionally, set `CRYSTAL_BALL_DIR` in your shell profile if you want a custom location:
-
-```bash
-export CRYSTAL_BALL_DIR="$HOME/.crystal-ball/sessions"
-```
-
-### What the Hook Does
-
-The hook runs after every tool use and:
-- Infers the **phase** from the tool name (e.g., `Read`/`Grep` = researching, `Write`/`Edit` = coding, `Bash` with test commands = testing)
-- Preserves the existing **task** field (or defaults to "Working on project")
-- Extracts a **detail** string from the tool input (file path, command, search pattern)
-- Writes the sidecar atomically (tmp file + mv) to avoid partial reads
-
-### Setting the Task
-
-The hook preserves whatever task is already in the sidecar file. To set a task manually:
+The hook preserves whatever task is already in the sidecar. To set it:
 
 ```bash
 SIDECAR_DIR="${CRYSTAL_BALL_DIR:-$HOME/.crystal-ball/sessions}"
-SESSION_FILE="$SIDECAR_DIR/<your-session-id>.json"
-jq '.task = "Implement auth system"' "$SESSION_FILE" > "$SESSION_FILE.tmp" && mv "$SESSION_FILE.tmp" "$SESSION_FILE"
+# Find your session file
+ls "$SIDECAR_DIR"
+# Update the task
+jq '.task = "Build auth system"' "$SIDECAR_DIR/<session-id>.json" > /tmp/cb.json && mv /tmp/cb.json "$SIDECAR_DIR/<session-id>.json"
 ```
 
-Or let the hook create the initial file and it will default to "Working on project".
-
-### Setting Blocked
-
-To mark a session as blocked:
+### Forcing blocked state
 
 ```bash
-SIDECAR_DIR="${CRYSTAL_BALL_DIR:-$HOME/.crystal-ball/sessions}"
-SESSION_FILE="$SIDECAR_DIR/<your-session-id>.json"
-jq '.blocked = true | .detail = "Waiting for API key" | .updated_at = "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"' \
-  "$SESSION_FILE" > "$SESSION_FILE.tmp" && mv "$SESSION_FILE.tmp" "$SESSION_FILE"
+jq '.blocked = true | .detail = "Waiting for API key"' "$SIDECAR_DIR/<session-id>.json" > /tmp/cb.json && mv /tmp/cb.json "$SIDECAR_DIR/<session-id>.json"
 ```
+
+## How the Server Uses Sidecar Data
+
+1. Server reads all `.json` files from the sidecar directory
+2. Matches each file to a discovered OS process by `cwd`
+3. Validates schema (task, phase, updated_at required)
+4. Merges with OS-level classification:
+   - `blocked: true` in sidecar **always overrides** OS state
+   - Stale sidecar + idle OS process → OS state wins
+   - Fresh sidecar + any OS state → sidecar enriches
+5. Sets `mode: 2` and attaches `context` object to session
+
+## How the Client Renders Mode 2
+
+- **Unit animations**: Phase maps to activity (coding → Building, researching → Patrolling, etc.)
+- **Blocked state**: Muted blue-grey body, pause icon, 0.4x animation speed
+- **Selection panel**: Shows task, phase badge, detail text, blocked indicator
+- **War Room**: Mode 2 Intel section with phase distribution and blocked list
+- **HUD**: Blocked session counter with alert styling
+
+## Requirements
+
+- `jq` (JSON processor): `brew install jq`
+- Claude Code with hooks support
+- Crystal Ball server running with real discovery (not simulator)
