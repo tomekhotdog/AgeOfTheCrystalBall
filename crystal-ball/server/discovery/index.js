@@ -22,6 +22,11 @@ export async function createDiscovery() {
     return new MacOSDiscovery();
   }
 
+  if (process.platform === "linux") {
+    const { LinuxDiscovery } = await import("./linux.js");
+    return new LinuxDiscovery();
+  }
+
   // Stub -- real discovery not yet implemented for this platform
   return {
     async discoverSessions() {
