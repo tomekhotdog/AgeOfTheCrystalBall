@@ -51,7 +51,8 @@ export function parsePsOutput(stdout) {
 export function filterClaudeProcesses(processes) {
   return processes.filter(p => {
     const cmd = p.command;
-    return cmd.includes('/claude') ||
+    return cmd === 'claude' ||
+           cmd.includes('/claude') ||
            cmd.includes('@anthropic/claude-code') ||
            cmd.includes('claude-code');
   });

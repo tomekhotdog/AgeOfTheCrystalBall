@@ -7,10 +7,10 @@ import * as THREE from 'three';
 // Phase definitions
 // ---------------------------------------------------------------------------
 const PHASES = [
-  { name: 'dawn',  duration: 45,  dirColor: '#FFB7A5', dirIntensity: 0.9,  ambColor: '#BB8899', ambIntensity: 0.4,  sky: '#E8C8B8' },
-  { name: 'day',   duration: 120, dirColor: '#FFF5E6', dirIntensity: 1.3,  ambColor: '#99AABB', ambIntensity: 0.55, sky: '#E8E0D4' },
-  { name: 'dusk',  duration: 45,  dirColor: '#FF8C42', dirIntensity: 1.0,  ambColor: '#997755', ambIntensity: 0.45, sky: '#D4A574' },
-  { name: 'night', duration: 90,  dirColor: '#D8E4FF', dirIntensity: 1.8,  ambColor: '#AABBDD', ambIntensity: 1.0,  sky: '#5A6A90' },
+  { name: 'dawn',  duration: 15,  dirColor: '#FFD0C0', dirIntensity: 1.5,  ambColor: '#CCAABB', ambIntensity: 0.8,  sky: '#E8D0C4' },
+  { name: 'day',   duration: 210, dirColor: '#FFF5E6', dirIntensity: 1.3,  ambColor: '#99AABB', ambIntensity: 0.55, sky: '#E8E0D4' },
+  { name: 'dusk',  duration: 15,  dirColor: '#FFAA70', dirIntensity: 1.5,  ambColor: '#BB9977', ambIntensity: 0.8,  sky: '#D4B088' },
+  { name: 'night', duration: 60,  dirColor: '#D8E4FF', dirIntensity: 1.8,  ambColor: '#AABBDD', ambIntensity: 1.0,  sky: '#5A6A90' },
 ];
 
 // Pre-computed total so we don't recalculate every frame.
