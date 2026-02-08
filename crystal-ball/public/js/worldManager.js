@@ -151,7 +151,8 @@ export class WorldManager {
 
     // Create 3D mesh
     const mesh = createBuilding(buildingType);
-    mesh.position.set(tile.x, 0.15, tile.z); // sit on top of the grass tile
+    const groundY = tile.height !== undefined ? tile.height : 0.15;
+    mesh.position.set(tile.x, groundY, tile.z); // sit on top of the terrain
     mesh.userData.type = 'building';
     mesh.userData.groupId = group.id;
     this.scene.add(mesh);
@@ -179,6 +180,7 @@ export class WorldManager {
       mesh,
       type: buildingType,
       position: { x: tile.x, z: tile.z },
+      groundY,
       anchors,
       activityPair,
       _groupIndex: this.buildingTypeIndex - 1,
@@ -228,16 +230,22 @@ export class WorldManager {
       targetZ = bldg.position.z + Math.sin(angle) * 2.2;
     }
 
+    // Compute ground height at the unit's anchor position
+    const unitGroundY = this.terrain.getHeightAt
+      ? this.terrain.getHeightAt(targetX, targetZ)
+      : (bldg.groundY || 0.15);
+    const unitBaseY = unitGroundY + 0.1; // small offset above ground surface
+
     // Store base position for bobbing animation
     mesh.userData.baseX = targetX;
-    mesh.userData.baseY = 0.25;
+    mesh.userData.baseY = unitBaseY;
     mesh.userData.baseZ = targetZ;
 
     let marching = false;
 
     if (this.marchInManager) {
       // March in from nearest map edge
-      const { id: marchId } = this.marchInManager.startMarch(mesh, targetX, 0.25, targetZ);
+      const { id: marchId } = this.marchInManager.startMarch(mesh, targetX, unitBaseY, targetZ);
       this._marchToSession.set(marchId, session.id);
       marching = true;
     } else {
@@ -245,7 +253,7 @@ export class WorldManager {
       const spawnOffset = 0.6;
       mesh.position.set(
         targetX + (Math.random() - 0.5) * spawnOffset,
-        0.25,
+        unitBaseY,
         targetZ + (Math.random() - 0.5) * spawnOffset
       );
     }

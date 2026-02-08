@@ -448,7 +448,7 @@ export function generateTerrain(scene) {
         }
         if (nearWater) continue;
 
-        candidates.push({ x: wx, z: wz, biome: entry.biome });
+        candidates.push({ x: wx, z: wz, biome: entry.biome, height: entry.height });
       }
     }
 
@@ -704,6 +704,21 @@ export function generateTerrain(scene) {
     };
   }
 
+  /**
+   * Get the terrain surface height at a world position.
+   * Returns the top of the tile (full height for solid tiles, 0.08 for water).
+   * For positions between tiles, uses the nearest tile.
+   * @param {number} x - world x
+   * @param {number} z - world z
+   * @returns {number} surface Y coordinate
+   */
+  function getHeightAt(x, z) {
+    const key = `${Math.round(x)},${Math.round(z)}`;
+    const entry = tiles.get(key);
+    if (!entry) return 0.15; // fallback: default grass height
+    return entry.height;
+  }
+
   return {
     tiles,
     waterTiles,
@@ -713,6 +728,7 @@ export function generateTerrain(scene) {
     animateWater,
     addDecorations,
     getBiomeAt,
+    getHeightAt,
     mergeStaticGeometry,
   };
 }

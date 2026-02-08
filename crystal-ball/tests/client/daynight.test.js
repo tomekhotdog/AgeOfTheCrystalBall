@@ -11,10 +11,10 @@ import { calculatePhase } from '../../public/js/daynight.js';
 
 // ---------------------------------------------------------------------------
 // Phase layout (default 300 s cycle):
-//   dawn  :   0 –  45 s
-//   day   :  45 – 165 s
-//   dusk  : 165 – 210 s
-//   night : 210 – 300 s
+//   dawn  :   0 –  15 s
+//   day   :  15 – 225 s
+//   dusk  : 225 – 240 s
+//   night : 240 – 300 s
 // ---------------------------------------------------------------------------
 
 describe('calculatePhase', () => {
@@ -27,18 +27,18 @@ describe('calculatePhase', () => {
       assert.equal(phaseName, 'dawn');
     });
 
-    it('returns day at elapsed = 45', () => {
-      const { phaseName } = calculatePhase(45);
+    it('returns day at elapsed = 15', () => {
+      const { phaseName } = calculatePhase(15);
       assert.equal(phaseName, 'day');
     });
 
-    it('returns dusk at elapsed = 165', () => {
-      const { phaseName } = calculatePhase(165);
+    it('returns dusk at elapsed = 225', () => {
+      const { phaseName } = calculatePhase(225);
       assert.equal(phaseName, 'dusk');
     });
 
-    it('returns night at elapsed = 210', () => {
-      const { phaseName } = calculatePhase(210);
+    it('returns night at elapsed = 240', () => {
+      const { phaseName } = calculatePhase(240);
       assert.equal(phaseName, 'night');
     });
 
@@ -52,23 +52,23 @@ describe('calculatePhase', () => {
   // Mid-phase identification
   // -----------------------------------------------------------------------
   describe('phase identification at midpoints', () => {
-    it('returns dawn at 22.5 s (midpoint of dawn)', () => {
-      const { phaseName } = calculatePhase(22.5);
+    it('returns dawn at 7.5 s (midpoint of dawn)', () => {
+      const { phaseName } = calculatePhase(7.5);
       assert.equal(phaseName, 'dawn');
     });
 
-    it('returns day at 105 s (midpoint of day)', () => {
-      const { phaseName } = calculatePhase(105);
+    it('returns day at 120 s (midpoint of day)', () => {
+      const { phaseName } = calculatePhase(120);
       assert.equal(phaseName, 'day');
     });
 
-    it('returns dusk at 187.5 s (midpoint of dusk)', () => {
-      const { phaseName } = calculatePhase(187.5);
+    it('returns dusk at 232.5 s (midpoint of dusk)', () => {
+      const { phaseName } = calculatePhase(232.5);
       assert.equal(phaseName, 'dusk');
     });
 
-    it('returns night at 255 s (midpoint of night)', () => {
-      const { phaseName } = calculatePhase(255);
+    it('returns night at 270 s (midpoint of night)', () => {
+      const { phaseName } = calculatePhase(270);
       assert.equal(phaseName, 'night');
     });
   });
@@ -79,16 +79,16 @@ describe('calculatePhase', () => {
   describe('getPhase returns correct name at key timepoints', () => {
     const cases = [
       [0,    'dawn'],
-      [10,   'dawn'],
-      [44,   'dawn'],
-      [45,   'day'],
+      [7,    'dawn'],
+      [14,   'dawn'],
+      [15,   'day'],
       [100,  'day'],
-      [164,  'day'],
-      [165,  'dusk'],
-      [200,  'dusk'],
-      [209,  'dusk'],
-      [210,  'night'],
-      [250,  'night'],
+      [224,  'day'],
+      [225,  'dusk'],
+      [232,  'dusk'],
+      [239,  'dusk'],
+      [240,  'night'],
+      [270,  'night'],
       [299,  'night'],
     ];
 
@@ -136,68 +136,29 @@ describe('calculatePhase', () => {
       assert.equal(phaseProgress, 0);
     });
 
-    it('is ~0.5 at midpoint of dawn (22.5 s)', () => {
-      const { phaseProgress } = calculatePhase(22.5);
+    it('is ~0.5 at midpoint of dawn (7.5 s)', () => {
+      const { phaseProgress } = calculatePhase(7.5);
       assert.ok(Math.abs(phaseProgress - 0.5) < 1e-9,
         `Expected ~0.5 but got ${phaseProgress}`);
     });
 
-    it('is 0.0 at the start of day (45 s)', () => {
-      const { phaseProgress } = calculatePhase(45);
+    it('is 0.0 at the start of day (15 s)', () => {
+      const { phaseProgress } = calculatePhase(15);
       assert.ok(Math.abs(phaseProgress) < 1e-9,
         `Expected ~0 but got ${phaseProgress}`);
     });
 
-    it('is ~0.5 at midpoint of day (105 s)', () => {
-      const { phaseProgress } = calculatePhase(105);
+    it('is ~0.5 at midpoint of day (120 s)', () => {
+      const { phaseProgress } = calculatePhase(120);
       assert.ok(Math.abs(phaseProgress - 0.5) < 1e-9,
         `Expected ~0.5 but got ${phaseProgress}`);
     });
 
-    it('is ~0.5 at midpoint of night (255 s)', () => {
-      const { phaseProgress } = calculatePhase(255);
+    it('is ~0.5 at midpoint of night (270 s)', () => {
+      const { phaseProgress } = calculatePhase(270);
       assert.ok(Math.abs(phaseProgress - 0.5) < 1e-9,
         `Expected ~0.5 but got ${phaseProgress}`);
     });
-  });
-
-  // -----------------------------------------------------------------------
-  // Light intensity interpolation ranges at phase midpoints
-  //
-  // At the midpoint of a phase (phaseProgress = 0.5), the interpolated
-  // intensity should be roughly between the current phase value and the
-  // next phase value. We verify the raw phase data gives us sane bounds.
-  // -----------------------------------------------------------------------
-  describe('intensity interpolation ranges at phase midpoints', () => {
-    // Phase data mirrored from daynight.js for assertion bounds.
-    const phases = [
-      { name: 'dawn',  dirI: 0.8,  ambI: 0.3  },
-      { name: 'day',   dirI: 1.2,  ambI: 0.4  },
-      { name: 'dusk',  dirI: 0.9,  ambI: 0.25 },
-      { name: 'night', dirI: 0.3,  ambI: 0.15 },
-    ];
-
-    for (let i = 0; i < phases.length; i++) {
-      const cur = phases[i];
-      const nxt = phases[(i + 1) % phases.length];
-
-      it(`dirLight intensity at ${cur.name} midpoint is between ${cur.name} and ${nxt.name}`, () => {
-        const lo = Math.min(cur.dirI, nxt.dirI);
-        const hi = Math.max(cur.dirI, nxt.dirI);
-        // The midpoint interpolated value must fall in [lo, hi].
-        const mid = (cur.dirI + nxt.dirI) / 2;
-        assert.ok(mid >= lo && mid <= hi,
-          `Midpoint ${mid} outside [${lo}, ${hi}]`);
-      });
-
-      it(`ambientLight intensity at ${cur.name} midpoint is between ${cur.name} and ${nxt.name}`, () => {
-        const lo = Math.min(cur.ambI, nxt.ambI);
-        const hi = Math.max(cur.ambI, nxt.ambI);
-        const mid = (cur.ambI + nxt.ambI) / 2;
-        assert.ok(mid >= lo && mid <= hi,
-          `Midpoint ${mid} outside [${lo}, ${hi}]`);
-      });
-    }
   });
 
   // -----------------------------------------------------------------------
@@ -212,9 +173,9 @@ describe('calculatePhase', () => {
       assert.ok(Math.abs(a.phaseProgress - b.phaseProgress) < 1e-9);
     });
 
-    it('elapsed = 345 wraps identically to elapsed = 45', () => {
-      const a = calculatePhase(45);
-      const b = calculatePhase(345);
+    it('elapsed = 315 wraps identically to elapsed = 15', () => {
+      const a = calculatePhase(15);
+      const b = calculatePhase(315);
       assert.equal(a.phaseName, b.phaseName);
       assert.equal(a.phaseIndex, b.phaseIndex);
       assert.ok(Math.abs(a.phaseProgress - b.phaseProgress) < 1e-9);
@@ -244,9 +205,9 @@ describe('calculatePhase', () => {
 
     it('phases still occur in the same order', () => {
       assert.equal(calculatePhase(0, customDuration).phaseName, 'dawn');
-      assert.equal(calculatePhase(90, customDuration).phaseName, 'day');
-      assert.equal(calculatePhase(330, customDuration).phaseName, 'dusk');
-      assert.equal(calculatePhase(420, customDuration).phaseName, 'night');
+      assert.equal(calculatePhase(30, customDuration).phaseName, 'day');
+      assert.equal(calculatePhase(450, customDuration).phaseName, 'dusk');
+      assert.equal(calculatePhase(480, customDuration).phaseName, 'night');
     });
 
     it('cycle wraps at customDuration', () => {
@@ -263,19 +224,19 @@ describe('calculatePhase', () => {
     });
 
     it('phase durations scale proportionally', () => {
-      // Dawn is 45/300 of the cycle. At customDuration=600, dawn lasts 90 s.
-      // So at elapsed=89 we should still be in dawn.
-      assert.equal(calculatePhase(89, customDuration).phaseName, 'dawn');
-      // At elapsed=90 we should enter day.
-      assert.equal(calculatePhase(90, customDuration).phaseName, 'day');
+      // Dawn is 15/300 of the cycle. At customDuration=600, dawn lasts 30 s.
+      // So at elapsed=29 we should still be in dawn.
+      assert.equal(calculatePhase(29, customDuration).phaseName, 'dawn');
+      // At elapsed=30 we should enter day.
+      assert.equal(calculatePhase(30, customDuration).phaseName, 'day');
     });
 
     it('short cycle (60 s) works correctly', () => {
       const short = 60;
-      // Dawn would be 45/300 * 60 = 9 s
+      // Dawn would be 15/300 * 60 = 3 s
       assert.equal(calculatePhase(0, short).phaseName, 'dawn');
-      assert.equal(calculatePhase(8.9, short).phaseName, 'dawn');
-      assert.equal(calculatePhase(9, short).phaseName, 'day');
+      assert.equal(calculatePhase(2.9, short).phaseName, 'dawn');
+      assert.equal(calculatePhase(3, short).phaseName, 'day');
       // Full wrap
       const a = calculatePhase(0, short);
       const b = calculatePhase(60, short);
