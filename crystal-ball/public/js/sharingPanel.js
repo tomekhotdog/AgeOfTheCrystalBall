@@ -1,6 +1,8 @@
 // sharingPanel.js -- Sharing settings popover.
 // Toggle sharing on/off and exclude specific projects from being published.
 
+import { escapeHTML } from './utils.js';
+
 export class SharingPanel {
   /**
    * @param {string} mode -- 'local' or 'multi'
@@ -67,7 +69,7 @@ export class SharingPanel {
 
     const projectItems = this._groups.map(g => {
       const checked = !excludeSet.has(g) ? 'checked' : '';
-      return `<label><input type="checkbox" data-group="${esc(g)}" ${checked}> ${esc(g)}</label>`;
+      return `<label><input type="checkbox" data-group="${escapeHTML(g)}" ${checked}> ${escapeHTML(g)}</label>`;
     }).join('');
 
     this.el.innerHTML = `
@@ -127,9 +129,4 @@ export class SharingPanel {
       console.warn('[SharingPanel] save failed');
     }
   }
-}
-
-function esc(str) {
-  if (!str) return '';
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }

@@ -152,10 +152,11 @@ export function animHeadNod(mesh, time) {
 
 /**
  * Tiny rapid X-axis vibration. Amplitude 0.005, high frequency.
- * Layered on top of other animations.
+ * Layered on top of other animations. Uses baseX to avoid drift.
  */
 export function animTremor(mesh, time) {
-  mesh.position.x += Math.sin(time * 30) * 0.005;
+  const baseX = mesh.userData.baseX ?? mesh.position.x;
+  mesh.position.x = baseX + Math.sin(time * 30) * 0.005;
 }
 
 /**

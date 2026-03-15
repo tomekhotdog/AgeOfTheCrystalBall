@@ -197,10 +197,9 @@ export class HotkeyManager {
     const pos = unit.mesh.position;
     centerCameraOn(this.camera, pos.x, pos.z);
 
-    // Also select the unit so user sees its info
-    if (typeof this.selectionManager.selectMultiple === 'function') {
-      this.selectionManager.selectMultiple([unit.mesh]);
-    }
+    // Select the unit so user sees its info
+    this.selectionManager.deselectAll();
+    this.selectionManager._applyUnitHighlight(unit.mesh);
     this.onShowMultiUnit([target]);
   }
 
@@ -218,26 +217,16 @@ export class HotkeyManager {
     }
     if (meshes.length === 0) return;
 
-    // Use selectionManager to multi-select if it supports it,
-    // otherwise highlight the first one and show the multi-unit panel.
-    if (typeof this.selectionManager.selectMultiple === 'function') {
-      this.selectionManager.selectMultiple(meshes);
+    this.selectionManager.deselectAll();
+    for (const m of meshes) {
+      this.selectionManager._applyUnitHighlight(m);
     }
-
     this.onShowMultiUnit(awaiting);
   }
 
   /** Escape — clear selection and panels. */
   _deselectAll() {
-    if (typeof this.selectionManager.deselectAll === 'function') {
-      this.selectionManager.deselectAll();
-    } else {
-      // Fallback: trigger the existing deselect callback via _clearHighlight + onDeselect
-      this.selectionManager._clearHighlight();
-      if (typeof this.selectionManager.onDeselect === 'function') {
-        this.selectionManager.onDeselect();
-      }
-    }
+    this.selectionManager.deselectAll();
   }
 
   /** 1-5 — jump camera to the Nth group's building. */
@@ -254,19 +243,10 @@ export class HotkeyManager {
 
   /** f — center camera on average position of current selection. */
   _focusOnSelection() {
-    // Collect positions from selected unit(s).
-    // selectionManager.selected holds a single selection; if multi-select is
-    // available via selectedMeshes, prefer that.
     const positions = [];
 
-    if (this.selectionManager.selectedMeshes && this.selectionManager.selectedMeshes.length > 0) {
-      for (const entry of this.selectionManager.selectedMeshes) {
-        const mesh = entry.mesh || entry;
-        positions.push({ x: mesh.position.x, z: mesh.position.z });
-      }
-    } else if (this.selectionManager.selected) {
-      const mesh = this.selectionManager.selected.mesh;
-      positions.push({ x: mesh.position.x, z: mesh.position.z });
+    for (const entry of this.selectionManager.selectedUnits) {
+      positions.push({ x: entry.mesh.position.x, z: entry.mesh.position.z });
     }
 
     if (positions.length === 0) return;

@@ -3,6 +3,7 @@
 
 import * as THREE from 'three';
 import { rankDisplayTitle } from './units.js';
+import { escapeHTML } from './utils.js';
 
 // ---------------------------------------------------------------------------
 // Pure helpers (exported for testing)
@@ -102,19 +103,6 @@ export function formatTooltipHTML(unitData, session) {
   }
 
   return html;
-}
-
-// ---------------------------------------------------------------------------
-// Internal helpers
-// ---------------------------------------------------------------------------
-
-/** Escape HTML special characters. */
-function escapeHTML(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 /** Capitalize the first letter of a string. */

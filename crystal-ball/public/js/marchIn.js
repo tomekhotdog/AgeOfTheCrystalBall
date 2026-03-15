@@ -39,8 +39,8 @@ const GRID_SIZE = 28;
  */
 export function computeEdgeSpawn(targetX, targetZ, gridSize = GRID_SIZE) {
   const half = gridSize / 2;
-  const minEdge = -half;       // -12
-  const maxEdge = half - 1;    // +11
+  const minEdge = -half;
+  const maxEdge = half - 1;
 
   // Distance from each edge
   const distLeft   = Math.abs(targetX - minEdge);

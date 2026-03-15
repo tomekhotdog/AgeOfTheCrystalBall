@@ -37,23 +37,4 @@ export class RelaySubscriber {
     }
   }
 
-  /**
-   * Fetch the user roster from the relay.
-   * @returns {Promise<object|null>}
-   */
-  async fetchUsers() {
-    try {
-      const headers = {};
-      if (this._token) {
-        headers['Authorization'] = `Bearer ${this._token}`;
-      }
-
-      const res = await fetch(`${this._relayUrl}/api/users`, { headers });
-      if (!res.ok) return null;
-      return await res.json();
-    } catch (err) {
-      console.warn('[RelaySubscriber] users fetch error:', err.message);
-      return null;
-    }
-  }
 }

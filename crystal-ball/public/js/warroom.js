@@ -1,6 +1,8 @@
 // warroom.js -- Trading Floor stats dashboard panel.
 // Slide-in panel with portfolio overview, desk leaderboard, and trade log.
 
+import { escapeHTML, countSessionStates } from './utils.js';
+
 // ---------------------------------------------------------------------------
 // Pure helper functions (exported for testing)
 // ---------------------------------------------------------------------------
@@ -78,24 +80,6 @@ export function detectTransitions(prevStates, currentSessions) {
     }
   }
   return transitions;
-}
-
-// ---------------------------------------------------------------------------
-// Helpers (internal)
-// ---------------------------------------------------------------------------
-
-/**
- * Minimal HTML escaping.
- * @param {string} str
- * @returns {string}
- */
-function esc(str) {
-  if (!str) return '';
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 /**
@@ -218,12 +202,11 @@ export class WarRoom {
    * @param {Array|undefined} users
    */
   _renderOverview(sessions, users) {
-    const counts = { active: 0, awaiting: 0, blocked: 0, idle: 0, stale: 0 };
+    const counts = countSessionStates(sessions);
     let totalCpu = 0;
     let totalMem = 0;
 
     for (const s of sessions) {
-      if (counts[s.state] !== undefined) counts[s.state]++;
       totalCpu += s.cpu ?? 0;
       totalMem += s.mem ?? 0;
     }
@@ -242,7 +225,7 @@ export class WarRoom {
         <span class="warroom-stat-value">${users.length}</span>
       </div>
       <div class="warroom-stat-row" style="font-size:11px;opacity:0.7;flex-wrap:wrap;gap:4px;">
-        ${users.map(u => `<span><span class="owner-dot" style="background:${esc(u.color)}"></span> ${esc(u.name)}</span>`).join(' ')}
+        ${users.map(u => `<span><span class="owner-dot" style="background:${escapeHTML(u.color)}"></span> ${escapeHTML(u.name)}</span>`).join(' ')}
       </div>`
       : '';
     body.innerHTML = `
@@ -320,11 +303,11 @@ export class WarRoom {
     for (const r of rows) {
       const owners = ownersMap.get(r.id);
       const ownerDots = owners
-        ? owners.map(o => `<span class="owner-dot" style="background:${esc(ownerColorMap.get(o) || '#60C0F0')}" title="${esc(o)}"></span>`).join('')
+        ? owners.map(o => `<span class="owner-dot" style="background:${escapeHTML(ownerColorMap.get(o) || '#60C0F0')}" title="${escapeHTML(o)}"></span>`).join('')
         : '';
       html += `
       <tr>
-        <td>${esc(r.id)} ${ownerDots}</td>
+        <td>${escapeHTML(r.id)} ${ownerDots}</td>
         <td>${r.unitCount}</td>
         <td>${r.activeCount}</td>
         <td>${r.avgCpu.toFixed(1)}%</td>
@@ -366,7 +349,7 @@ export class WarRoom {
 
     const blockedHtml = blockedSessions.length > 0
       ? blockedSessions.map(s =>
-          `<div style="color:#D87068;font-size:11px;">${esc(s.id)} (${esc(s.group)}) - ${esc(s.context?.detail || 'blocked')}</div>`
+          `<div style="color:#D87068;font-size:11px;">${escapeHTML(s.id)} (${escapeHTML(s.group)}) - ${escapeHTML(s.context?.detail || 'blocked')}</div>`
         ).join('')
       : '';
 
@@ -400,7 +383,7 @@ export class WarRoom {
       html += `
         <div class="warroom-feed-entry">
           <span class="warroom-feed-time">${timeStr}</span>
-          <span class="${stateClass}">${esc(entry.sessionId)} (${esc(entry.group)}) &rarr; ${entry.toState}</span>
+          <span class="${stateClass}">${escapeHTML(entry.sessionId)} (${escapeHTML(entry.group)}) &rarr; ${entry.toState}</span>
         </div>`;
     }
 

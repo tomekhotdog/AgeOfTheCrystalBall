@@ -25,7 +25,6 @@ export class RelayPublisher {
   async publish(snapshot, excludedGroups = []) {
     try {
       const filtered = RelayPublisher.filterSnapshot(snapshot, excludedGroups);
-      const namespaced = RelayPublisher.namespaceSnapshot(filtered, this._userName);
 
       const headers = { 'Content-Type': 'application/json' };
       if (this._token) {
@@ -38,7 +37,7 @@ export class RelayPublisher {
         body: JSON.stringify({
           user: this._userName,
           color: this._userColor,
-          snapshot: namespaced,
+          snapshot: filtered,
         }),
       });
 
@@ -81,17 +80,4 @@ export class RelayPublisher {
     };
   }
 
-  /**
-   * Namespace session IDs for publishing (so they don't collide with other users).
-   * The relay merger also namespaces, but we pre-namespace here so the local
-   * snapshot is already in the correct format.
-   * @param {object} snapshot
-   * @param {string} userName
-   * @returns {object} snapshot with namespaced IDs
-   */
-  static namespaceSnapshot(snapshot, userName) {
-    // Don't namespace here -- the relay merger handles namespacing.
-    // This avoids double-namespacing. Just pass through.
-    return snapshot;
-  }
 }

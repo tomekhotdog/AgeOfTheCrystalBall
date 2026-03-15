@@ -49,14 +49,14 @@ function main() {
   });
 
   // GET /api/combined -- merged view of all users
-  app.get('/api/combined', (req, res) => {
+  app.get('/api/combined', auth, (req, res) => {
     const entries = store.getAll();
     const combined = mergeSnapshots(entries);
     res.json(combined);
   });
 
   // GET /api/users -- online user roster
-  app.get('/api/users', (req, res) => {
+  app.get('/api/users', auth, (req, res) => {
     res.json({ users: store.getUserList() });
   });
 

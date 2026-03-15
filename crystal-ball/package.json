@@ -6,6 +6,7 @@
     "start": "node server/index.js",
     "simulate": "SIMULATE=true node server/index.js",
     "test": "npm run test:client && npm run test:server",
+    "test:integration": "node --test tests/integration/*.test.js",
     "test:client": "node --loader ./tests/client/three-mock-loader.js --test tests/client/*.test.js",
     "test:server": "node --test tests/server/*.test.js",
     "relay": "node ../crystal-ball-relay/server/index.js",

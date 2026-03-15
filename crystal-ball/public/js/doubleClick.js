@@ -2,8 +2,6 @@
 // or all units in a building's group.
 // Phase 5.4
 
-import * as THREE from 'three';
-
 // ---------------------------------------------------------------------------
 // Pure functions (no THREE dependency)
 // ---------------------------------------------------------------------------
@@ -71,8 +69,6 @@ export class DoubleClickHandler {
 
     /** @type {number} timestamp of last unit click */
     this._lastUnitClickTime = 0;
-    /** @type {string|null} sessionId of last clicked unit */
-    this._lastUnitSessionId = null;
     /** @type {string|null} unitClass of last clicked unit */
     this._lastUnitClass = null;
 
@@ -119,12 +115,10 @@ export class DoubleClickHandler {
 
       // Reset after firing so a third click starts fresh
       this._lastUnitClickTime = 0;
-      this._lastUnitSessionId = null;
       this._lastUnitClass = null;
     } else {
       // First click — record timing
       this._lastUnitClickTime = now;
-      this._lastUnitSessionId = sessionId;
       this._lastUnitClass = unitClass;
     }
 
@@ -170,7 +164,6 @@ export class DoubleClickHandler {
 
     // Reset unit tracking on building click
     this._lastUnitClickTime = 0;
-    this._lastUnitSessionId = null;
     this._lastUnitClass = null;
   }
 }

@@ -1,6 +1,8 @@
 // roster.js -- Online player roster panel (left side).
 // Shows connected users with colored dots, session counts, and "You" indicator.
 
+import { escapeHTML } from './utils.js';
+
 export class RosterPanel {
   /**
    * @param {{ name: string, color: string }|null} localUser -- current user info
@@ -53,8 +55,8 @@ export class RosterPanel {
       const youTag = isSelf ? ' (you)' : '';
       html += `
         <div class="roster-user-row${selfClass}">
-          <span class="owner-dot" style="background:${esc(u.color)}"></span>
-          <span class="roster-user-name">${esc(u.name)}${youTag}</span>
+          <span class="owner-dot" style="background:${escapeHTML(u.color)}"></span>
+          <span class="roster-user-name">${escapeHTML(u.name)}${youTag}</span>
           <span class="roster-user-count">${u.sessionCount}</span>
         </div>
       `;
@@ -62,9 +64,4 @@ export class RosterPanel {
 
     body.innerHTML = html;
   }
-}
-
-function esc(str) {
-  if (!str) return '';
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
